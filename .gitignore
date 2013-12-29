@@ -34,3 +34,13 @@ nosetests.xml
 .mr.developer.cfg
 .project
 .pydevproject
+pyramid_duh_env
+.ropeproject
+_version.py
+_localhost.db
+
+# docs
+_build
+
+# vim
+*.swp
