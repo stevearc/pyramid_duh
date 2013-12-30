@@ -1,7 +1,7 @@
 """ pyramid_duh """
 from .params import argify
 from .route import ISmartLookupResource, IStaticResource, IModelResource
-from .view import CustomPredicateConfig, addslash, subpath
+from .view import addslash
 
 try:
     from ._version import *  # pylint: disable=F0401,W0401
@@ -12,3 +12,4 @@ except ImportError:
 def includeme(config):
     """ Add request methods """
     config.include('pyramid_duh.params')
+    config.include('pyramid_duh.view')
