@@ -8,3 +8,5 @@ TODO
 ====
 Tests
 Check compatibility with 2.6, 3.2, 3.3
+Documentation
+PyPI
