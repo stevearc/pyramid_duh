@@ -11,6 +11,7 @@ from pyramid.settings import asbool
 from zope.interface.exceptions import DoesNotImplement
 from zope.interface.verify import verifyObject
 # pylint: enable=F0401,E0611
+from .compat import string_type, bytes_types, num_types, is_string
 
 
 NO_ARG = object()
@@ -37,22 +38,17 @@ def _param(request, name, default=NO_ARG, type=None):
         provided
 
     """
-    params, loads = _params_from_request(request, default != NO_ARG)
-    return _param_from_dict(params, name, default, type, loads)
+    params, loads = _params_from_request(request)
+    return _param_from_dict(request, params, name, default, type, loads)
 
 
-def _params_from_request(request, allow_missing):
+def _params_from_request(request):
     """
     Pull the relevant parameters off the request
-
-    Uses query params by default. If no query params are present, it uses
-    json_body
 
     Parameters
     ----------
     request : :class:`~pyramid.request.Request`
-    allow_missing : bool
-        If False and no params found, raise a 400
 
     Returns
     -------
@@ -61,24 +57,20 @@ def _params_from_request(request, allow_missing):
         If true, any lists/dicts in the params need to be json decoded
 
     """
-    if request.params:
-        return request.params, True
+    if request.headers.get('Content-Type') == 'application/json':
+        return request.json_body, False
     else:
-        try:
-            return request.json_body, False
-        except ValueError:
-            if allow_missing:
-                return {}, False
-            else:
-                raise HTTPBadRequest('No request parameters found!')
+        return request.params, True
 
 
-def _param_from_dict(params, name, default=NO_ARG, type=None, loads=True):
+def _param_from_dict(request, params, name, default=NO_ARG, type=None,
+                     loads=True):
     """
     Pull a parameter out of a dict and perform type conversion
 
     Parameters
     ----------
+    request : :class:`~pyramid.request.Request`
     params : dict
     name : str
         The name of the parameter to retrieve
@@ -99,13 +91,17 @@ def _param_from_dict(params, name, default=NO_ARG, type=None, loads=True):
         arg = params[name]
     except KeyError:
         if default is NO_ARG:
-            raise HTTPBadRequest('Missing argument %s' % name)
+            raise HTTPBadRequest("Missing argument '%s'" % name)
         else:
             return default
     try:
-        if type is None or type is unicode:
+        if type is None:
             return arg
-        elif type is str:
+        if type is string_type:
+            if not is_string(arg):
+                raise HTTPBadRequest("Argument '%s' is the wrong type!" % name)
+            return arg
+        elif type in bytes_types:
             return arg.encode("utf8")
         elif type is list or type is dict:
             if loads:
@@ -113,14 +109,34 @@ def _param_from_dict(params, name, default=NO_ARG, type=None, loads=True):
             if not isinstance(arg, type):
                 raise HTTPBadRequest("Argument '%s' is the wrong type!" % name)
             return arg
+        elif type is set:
+            if loads:
+                arg = json.loads(arg)
+            return set(arg)
         elif type is datetime.datetime or type is datetime:
             return datetime.datetime.fromtimestamp(float(arg))
+        elif type is datetime.timedelta:
+            return datetime.timedelta(seconds=float(arg))
         elif type is bool:
             return asbool(arg)
+        elif type in num_types:
+            return type(arg)
         else:
+            if loads:
+                arg = json.loads(arg)
+            if hasattr(type, '__from_json__'):
+                argspec = inspect.getargspec(type.__from_json__)
+                args = list(argspec.args)
+                # Pop the leading 'cls' if this is a classmethod
+                if inspect.ismethod(type.__from_json__):
+                    args.pop(0)
+                if len(args) == 1 and argspec.varargs is None:
+                    return type.__from_json__(arg)
+                else:
+                    return type.__from_json__(request, arg)
             return type(arg)
     except:
-        raise HTTPBadRequest('Badly formatted parameter "%s"' % name)
+        raise HTTPBadRequest("Badly formatted parameter '%s'" % name)
 
 
 def argify(*args, **type_kwargs):
@@ -177,12 +193,12 @@ def argify(*args, **type_kwargs):
         @functools.wraps(fxn)
         def param_twiddler(*args, **kwargs):
             """ The actual wrapper function that pulls out the params """
-            # If the second arg is the request, this is called from pyramid
+            # pyramid always calls with (context, request) arguments
             if len(args) == 2 and len(kwargs) == 0 and is_request(args[1]):
-                context, request = args  # pylint: disable=W0632
+                context, request = args[0], args[1]
                 scope = {}
-                params, loads = _params_from_request(request,
-                                                     len(required) == 0)
+
+                params, loads = _params_from_request(request)
                 params = dict(params)
                 for param in required:
                     if param == 'context':
@@ -190,13 +206,13 @@ def argify(*args, **type_kwargs):
                     elif param == 'request':
                         scope['request'] = request
                     else:
-                        scope[param] = _param_from_dict(params, param, NO_ARG,
-                                                        type_kwargs.get(param),
-                                                        loads=loads)
+                        scope[param] = _param_from_dict(
+                            request, params, param, NO_ARG,
+                            type_kwargs.get(param), loads=loads)
                         params.pop(param)
                 no_val = object()
                 for param in optional:
-                    val = _param_from_dict(params, param, no_val,
+                    val = _param_from_dict(request, params, param, no_val,
                                            type_kwargs.get(param), loads)
                     params.pop(param, None)
                     if val is not no_val:
