@@ -6,7 +6,7 @@ import sys
 ispy3k = int(sys.version[0]) >= 3
 
 
-if ispy3k:
+if ispy3k:  # pragma: no cover
     string_type = str
     fuzzy_string_type = str
     bytes_types = (bytes,)

@@ -1,8 +1,10 @@
 # encoding: utf-8
 """ Tests for view utilities """
+from pyramid.httpexceptions import HTTPFound
 import unittest
 from pyramid.testing import DummyRequest
-from pyramid_duh.view import SubpathPredicate
+from pyramid_duh.view import SubpathPredicate, addslash
+from pyramid_duh.params import argify
 
 
 class TestSubpath(unittest.TestCase):
@@ -107,3 +109,70 @@ class TestSubpath(unittest.TestCase):
         result = matcher(None, self.request)
         self.assertTrue(result)
         self.assertTrue('opt' in self.request.named_subpaths)
+
+# pylint: disable=C0111,E1101,E1121
+
+
+class TestAddslash(unittest.TestCase):
+
+    """ Tests for @addslash """
+
+    def test_addslash_redirect(self):
+        """ addslash causes redirect if path_url doesn't end in / """
+        @addslash
+        def myview(request):
+            return 'foobar'
+        context = object()
+        request = DummyRequest()
+        request.path_url = '/noslash'
+        ret = myview(context, request)
+        self.assertTrue(isinstance(ret, HTTPFound))
+        self.assertEqual(ret.location, request.path_url + '/')
+
+    def test_addslash_redirect_query(self):
+        """ addslash keeps the query string """
+        @addslash
+        def myview(request):
+            return 'foobar'
+        context = object()
+        request = DummyRequest()
+        request.query_string = 'foo=1&bar=2'
+        request.path_url = '/noslash'
+        ret = myview(context, request)
+        self.assertTrue(isinstance(ret, HTTPFound))
+        self.assertEqual(ret.location, request.path_url + '/?' +
+                         request.query_string)
+
+    def test_pass_context(self):
+        """ addslash passes on the context variable if needed """
+        @addslash
+        def myview(context, request):
+            return context, request
+        context = object()
+        request = DummyRequest()
+        request.path_url = '/'
+        ret = myview(context, request)
+        self.assertEqual(ret, (context, request))
+
+    def test_pass_request_only(self):
+        """ addslash passes on just the request if that's all that's needed """
+        @addslash
+        def myview(request):
+            return request
+        context = object()
+        request = DummyRequest()
+        request.path_url = '/'
+        ret = myview(context, request)
+        self.assertEqual(ret, request)
+
+    def test_passthrough_argify_unit_tests(self):
+        """ addslash doesn't interfere with unit tests that use @argify """
+        @addslash
+        @argify
+        def myview(request, *args, **kwargs):
+            return args, kwargs
+        args = ('a', 'b')
+        kwargs = {'c': 1, 'd': 2}
+        request = DummyRequest()
+        ret = myview(request, *args, **kwargs)
+        self.assertEqual(ret, (args, kwargs))

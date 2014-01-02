@@ -57,7 +57,8 @@ def _params_from_request(request):
         If true, any lists/dicts in the params need to be json decoded
 
     """
-    if request.headers.get('Content-Type') == 'application/json':
+    content_type = request.headers.get('Content-Type', '').split(';')[0]
+    if content_type == 'application/json':
         return request.json_body, False
     else:
         return request.params, True

@@ -7,6 +7,7 @@ import inspect
 from pyramid.httpexceptions import HTTPFound
 
 from .compat import is_string
+from .params import is_request
 
 
 def match(pattern, path, flags):
@@ -50,7 +51,7 @@ def match(pattern, path, flags):
         for char in flags:
             if char == 'i':
                 re_flags |= re.I
-            elif char == 'a' and hasattr(re, 'A'):  # py3 only
+            elif char == 'a' and hasattr(re, 'A'):  # pragma: no cover
                 re_flags |= re.A  # pylint: disable=E1101
         return re.match('^%s$' % pattern, path, re_flags)
     else:
@@ -146,25 +147,41 @@ class SubpathPredicate(object):
 
 
 def addslash(fxn):
-    """ View decorator that adds a trailing slash """
+    """
+    View decorator that adds a trailing slash
+
+    Notes
+    -----
+    Usage:
+
+    .. code-block:: python
+
+        @view_config(context=MyCtxt, renderer='json')
+        @addslash
+        def do_view(request):
+            return 'cool data'
+
+    """
     argspec = inspect.getargspec(fxn)
 
     @functools.wraps(fxn)
-    def slash_redirect(*args):
+    def slash_redirect(*args, **kwargs):
         """ Perform the redirect or pass though to view """
-        if len(args) == 1:
-            request = args[0]
-        else:
+        # pyramid always calls with (context, request) arguments
+        if len(args) == 2 and is_request(args[1]):
             request = args[1]
-        if not request.path_url.endswith('/'):
-            new_url = request.path_url
-            if request.query_string:
-                new_url += '?' + request.query_string
-            return HTTPFound(location=new_url + '/')
-        if len(argspec.args) == 1 and argspec.varargs is None:
-            return fxn(request)
+            if not request.path_url.endswith('/'):
+                new_url = request.path_url + '/'
+                if request.query_string:
+                    new_url += '?' + request.query_string
+                return HTTPFound(location=new_url)
+            if len(argspec.args) == 1 and argspec.varargs is None:
+                return fxn(request)
+            else:
+                return fxn(*args)
         else:
-            return fxn(*args)
+            # Otherwise, it's likely a unit test. Don't change anything.
+            return fxn(*args, **kwargs)
 
     return slash_redirect
 

@@ -7,6 +7,6 @@ add it to pypi at some point.
 TODO
 ====
 Tests
-Check compatibility with 2.6, 3.2, 3.3
+Params do type validation (int range checking, enums, etc)
 Documentation
 PyPI
