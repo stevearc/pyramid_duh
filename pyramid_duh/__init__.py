@@ -5,7 +5,7 @@ from .view import addslash
 
 try:
     from ._version import *  # pylint: disable=F0401,W0401
-except ImportError:
+except ImportError:  # pragma: no cover
     __version__ = 'unknown'
 
 

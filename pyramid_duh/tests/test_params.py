@@ -5,12 +5,15 @@ import datetime
 import time
 
 import json
-import unittest
 from pyramid.httpexceptions import HTTPBadRequest
 from mock import MagicMock
 from pyramid.testing import DummyRequest
 from pyramid_duh.compat import is_bytes, is_string, string_type
 from pyramid_duh.params import argify, _param, includeme
+try:
+    import unittest2 as unittest  # pylint: disable=F0401
+except ImportError:
+    import unittest
 
 
 class ParamContainer(object):
