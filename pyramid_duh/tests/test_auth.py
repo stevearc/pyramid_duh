@@ -32,6 +32,12 @@ class TestAuth(unittest.TestCase):
             config.add_authentication_policy('foobar')
             add_policy.assert_called_with(policy)
 
+    def test_add_auth_to_mixed(self):
+        """ Adding a policy to MixedAuthenticationPolicy stores it in a list """
+        policy = MixedAuthenticationPolicy()
+        policy.add_policy('foobar')
+        self.assertEqual(policy._policies, ['foobar'])
+
     def test_first_auth_userid(self):
         """ authenticated_userid returns first valid userid """
         p1, p2 = MagicMock(), MagicMock()

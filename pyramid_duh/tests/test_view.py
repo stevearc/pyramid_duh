@@ -1,11 +1,13 @@
 # encoding: utf-8
 """ Tests for view utilities """
 import unittest
-from mock import MagicMock
+from mock import MagicMock, patch, call
 from pyramid.httpexceptions import HTTPFound
 from pyramid.testing import DummyRequest
 from pyramid_duh.params import argify
 from pyramid_duh.view import SubpathPredicate, addslash, includeme
+import pyramid_duh
+from pyramid.config import Configurator
 
 
 class TestSubpath(unittest.TestCase):
@@ -117,6 +119,11 @@ class TestSubpath(unittest.TestCase):
         self.request.subpath = ('foo',)
         result = matcher(None, self.request)
         self.assertFalse(result)
+
+    def test_format(self):
+        """ String format should be readable """
+        pred = SubpathPredicate(('*', '*'), None)
+        self.assertEqual(pred.text(), "subpath = ('*', '*')")
 
     def test_include(self):
         """ Including pyramid_duh.view adds the predicate method """

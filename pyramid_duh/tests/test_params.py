@@ -5,11 +5,16 @@ import datetime
 import time
 
 import json
+from mock import MagicMock, call, patch
 from pyramid.httpexceptions import HTTPBadRequest
-from mock import MagicMock
 from pyramid.testing import DummyRequest
 from pyramid_duh.compat import is_bytes, is_string, string_type
+from pyramid.config import Configurator
 from pyramid_duh.params import argify, _param, includeme
+
+import pyramid_duh
+
+
 try:
     import unittest2 as unittest  # pylint: disable=F0401
 except ImportError:
@@ -310,6 +315,13 @@ class TestParam(unittest.TestCase):
         includeme(config)
         config.add_request_method.assert_called_with(_param, name='param')
 
+    @patch('pyramid.config.Configurator.add_request_method')
+    def ttest_include_root(self, add_request_method):
+        """ Including pyramid_duh should add param() as a req method """
+        config = Configurator()
+        pyramid_duh.includeme(config)
+        add_request_method.assert_has_calls([call(_param, name='param')])
+
 
 # pylint: disable=E1120,W0613,C0111
 class TestArgify(unittest.TestCase):
@@ -330,7 +342,7 @@ class TestArgify(unittest.TestCase):
     def test_missing(self):
         """ Raise exception if positional arg is missing """
         @argify
-        def req(request, field):
+        def req(request, field):  # pragma: no cover
             pass
         context = object()
         request = DummyRequest()
@@ -389,7 +401,7 @@ class TestArgify(unittest.TestCase):
 
     def test_error_on_mismatch(self):
         """ argify throws error if there's an argument mismatch """
-        def req(request, field):
+        def req(request, field):  # pragma: no cover
             pass
         decorator = argify(foobar=bool)
         self.assertRaises(TypeError, decorator, req)

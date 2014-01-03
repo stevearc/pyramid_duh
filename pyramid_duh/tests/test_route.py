@@ -52,6 +52,15 @@ class TestSmartLookup(unittest.TestCase):
         with self.assertRaises(AttributeError):
             resource.foobar
 
+    def test_smart_lookup_no_private(self):
+        """ ISmartLookupResource doesn't look up private fields """
+        parent = ISmartLookupResource()
+        resource = ISmartLookupResource()
+        resource.__parent__ = parent
+        parent._foobar = 'baz'
+        with self.assertRaises(AttributeError):
+            resource._foobar
+
 
 class TestStaticResource(unittest.TestCase):
 
@@ -122,6 +131,13 @@ class TestModelResource(unittest.TestCase):
         resource = IModelResource()
         resource['foobar']
         db.query.assert_called_with(resource.__model__)
+
+    def test_default_db(self):
+        """ The default sqlalchemy database is request.db """
+        request = MagicMock()
+        resource = IModelResource()
+        resource.request = request
+        self.assertEqual(resource.db, request.db)
 
     def test_default_create(self):
         """ Default create operation raises keyerror """
