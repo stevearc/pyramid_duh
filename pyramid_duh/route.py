@@ -33,6 +33,9 @@ class ISmartLookupResource(object):
             try:
                 return getattr(current, name)
             except AttributeError:
+                # If this node was doing smart lookup, we don't need to
+                if isinstance(current, ISmartLookupResource):
+                    break
                 current = current.__parent__
         raise AttributeError("'%s' not found on any parents of %s" %
                              (name, self))
