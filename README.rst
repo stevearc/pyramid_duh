@@ -11,8 +11,3 @@ Pyramid Duh
 
 This is just a collection of utilities that I found myself putting into *every
 single* pyramid project I made. So now they're all in one place.
-
-TODO
-====
-* Params do type validation (int range checking, enums, etc)
-* PyPI

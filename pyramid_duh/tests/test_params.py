@@ -316,11 +316,27 @@ class TestParam(unittest.TestCase):
         config.add_request_method.assert_called_with(_param, name='param')
 
     @patch('pyramid.config.Configurator.add_request_method')
-    def ttest_include_root(self, add_request_method):
+    def test_include_root(self, add_request_method):
         """ Including pyramid_duh should add param() as a req method """
         config = Configurator()
         pyramid_duh.includeme(config)
         add_request_method.assert_has_calls([call(_param, name='param')])
+
+    def test_validate(self):
+        """ param() can run a validation check on parameter values """
+        request = DummyRequest()
+        request.params = {'field': 'foobar'}
+        validate = lambda x: x.startswith('foo')
+        field = _param(request, 'field', validate=validate)
+        self.assertEquals(field, 'foobar')
+
+    def test_validate_failure(self):
+        """ if param() fails validation check, raise exception """
+        request = DummyRequest()
+        request.params = {'field': 'myfield'}
+        validate = lambda x: x.startswith('foo')
+        with self.assertRaises(HTTPBadRequest):
+            _param(request, 'field', validate=validate)
 
 
 # pylint: disable=E1120,W0613,C0111
@@ -446,3 +462,29 @@ class TestArgify(unittest.TestCase):
         request.params = {'field': 'myfield'}
         val = base_req(context, request)
         self.assertEquals(val, (context, request, 'myfield'))
+
+    def test_validate(self):
+        """ argify() can run a validation check on parameter values """
+        validate = lambda x: x.startswith('foo')
+
+        @argify(field=(string_type, validate))
+        def base_req(request, field):
+            return field
+        context = object()
+        request = DummyRequest()
+        request.params = {'field': 'foobar'}
+        val = base_req(context, request)
+        self.assertEquals(val, 'foobar')
+
+    def test_validate_failure(self):
+        """ if argify fails validation check, raise exception """
+        validate = lambda x: x.startswith('foo')
+
+        @argify(field=(string_type, validate))
+        def base_req(request, field):
+            return field
+        context = object()
+        request = DummyRequest()
+        request.params = {'field': 'myfield'}
+        with self.assertRaises(HTTPBadRequest):
+            base_req(context, request)
