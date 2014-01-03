@@ -2,7 +2,7 @@ Pyramid Duh - Tools you Want
 ============================
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 1
     :glob:
 
     topics/request_parameters

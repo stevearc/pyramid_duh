@@ -7,9 +7,10 @@ import time
 import json
 import unittest
 from pyramid.httpexceptions import HTTPBadRequest
+from mock import MagicMock
 from pyramid.testing import DummyRequest
-from pyramid_duh.compat import is_bytes, is_string
-from pyramid_duh.params import argify, _param
+from pyramid_duh.compat import is_bytes, is_string, string_type
+from pyramid_duh.params import argify, _param, includeme
 
 
 class ParamContainer(object):
@@ -74,6 +75,21 @@ class TestParam(unittest.TestCase):
         field = _param(request, 'field')
         self.assertEquals(field, 'myfield')
         self.assertTrue(is_string(field, strict=True))
+
+    def test_unicode_param_explicit(self):
+        """ Specifying type=unicode checks arg type before returning it """
+        request = DummyRequest()
+        request.params = {'field': 'myfield'}
+        field = _param(request, 'field', type=string_type)
+        self.assertEquals(field, 'myfield')
+        self.assertTrue(is_string(field, strict=True))
+
+    def test_unicode_param_bad_type(self):
+        """ Raise exception if unicode param as incorrect type """
+        request = DummyRequest()
+        request.params = {'field': 4}
+        with self.assertRaises(HTTPBadRequest):
+            _param(request, 'field', type=string_type)
 
     def test_str_param(self):
         """ Pull binary string param off of request object """
@@ -140,6 +156,13 @@ class TestParam(unittest.TestCase):
         field = _param(request, 'field', type=dict)
         self.assertEquals(field, {'a': 'b'})
 
+    def test_dict_param_bad_type(self):
+        """ If dict param isn't a dict, raise exception """
+        request = DummyRequest()
+        request.params = {'field': json.dumps(['a', 'b'])}
+        with self.assertRaises(HTTPBadRequest):
+            _param(request, 'field', type=dict)
+
     def test_set_param(self):
         """ Pull encoded sets off of request object """
         request = DummyRequest()
@@ -173,6 +196,14 @@ class TestParam(unittest.TestCase):
         request.headers = {'Content-Type': 'application/json'}
         field = _param(request, 'field', type=datetime)
         self.assertEquals(time.mktime(field.timetuple()), now)
+
+    def test_timedelta_param(self):
+        """ Pull timedelta off of request object """
+        request = DummyRequest()
+        diff = 3600
+        request.params = {'field': diff}
+        field = _param(request, 'field', type=datetime.timedelta)
+        self.assertEquals(field, datetime.timedelta(seconds=diff))
 
     def test_date_param(self):
         """ Pull date off of request object as YYYY-mm-dd """
@@ -263,9 +294,21 @@ class TestParam(unittest.TestCase):
         self.assertEqual(field.alpha, data['alpha'])
         self.assertEqual(field.beta, data['beta'])
 
+    def test_bad_format(self):
+        """ Raise exception if any error during type conversion """
+        request = DummyRequest()
+        request.params = {'field': 'abc'}
+        with self.assertRaises(HTTPBadRequest):
+            _param(request, 'field', type=int)
+
+    def test_include(self):
+        """ Including pyramid_duh.params should add param() as a req method """
+        config = MagicMock()
+        includeme(config)
+        config.add_request_method.assert_called_with(_param, name='param')
+
 
 # pylint: disable=E1120,W0613,C0111
-
 class TestArgify(unittest.TestCase):
 
     """ Tests for the argify decorator """
@@ -301,6 +344,16 @@ class TestArgify(unittest.TestCase):
         request = DummyRequest()
         request.params = {}
         request.json_body = {}
+        req(context, request)
+
+    def test_default_override(self):
+        """ If keyword arg is present, use that value """
+        @argify
+        def req(request, field='myfield'):
+            self.assertEquals(field, 'otherfield')
+        context = object()
+        request = DummyRequest()
+        request.params = {'field': 'otherfield'}
         req(context, request)
 
     def test_bool(self):
@@ -367,3 +420,14 @@ class TestArgify(unittest.TestCase):
             'foobar': 'baz',
         }
         req(context, request)
+
+    def test_pass_context(self):
+        """ argify will pass on context, request arguments to view """
+        @argify
+        def base_req(context, request, field):
+            return context, request, field
+        context = object()
+        request = DummyRequest()
+        request.params = {'field': 'myfield'}
+        val = base_req(context, request)
+        self.assertEquals(val, (context, request, 'myfield'))

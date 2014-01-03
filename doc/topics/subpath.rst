@@ -91,7 +91,7 @@ to get it that indexing the subpath?
 
 .. code-block:: python
 
-    @view_config(context=MyCtxt, name='foobar', subpath=('post', 'id/\*'))
+    @view_config(context=MyCtxt, name='foobar', subpath=('post', 'id/*'))
     def my_view(request):
         id = request.named_subpaths['id']
         # do things
@@ -99,7 +99,8 @@ to get it that indexing the subpath?
 Ooooooooooooooooooooooo
 
 Yeah, and it does PCRE as well. In case you need that. Check out the docs on
-:meth:`~pyramid_duh.view.match` for details on matching and flags.
+:class:`~pyramid_duh.view.SubpathPredicate` for all of the formats, and
+:meth:`~pyramid_duh.view.match` for details on match flags.
 
 How Does I Do?
 --------------

@@ -1,10 +1,11 @@
 # encoding: utf-8
 """ Tests for view utilities """
-from pyramid.httpexceptions import HTTPFound
 import unittest
+from mock import MagicMock
+from pyramid.httpexceptions import HTTPFound
 from pyramid.testing import DummyRequest
-from pyramid_duh.view import SubpathPredicate, addslash
 from pyramid_duh.params import argify
+from pyramid_duh.view import SubpathPredicate, addslash, includeme
 
 
 class TestSubpath(unittest.TestCase):
@@ -80,7 +81,7 @@ class TestSubpath(unittest.TestCase):
             'value': 'bar',
         })
 
-    def test_pcre_flag_a(self):
+    def test_pcre_flag_a(self):  # pragma: no cover
         """ Can match ascii-only """
         import re
         if not hasattr(re, 'A'):
@@ -110,9 +111,22 @@ class TestSubpath(unittest.TestCase):
         self.assertTrue(result)
         self.assertTrue('opt' in self.request.named_subpaths)
 
+    def test_non_optional_subpaths(self):
+        """ If subpath not marked as optional, it is mandatory """
+        matcher = SubpathPredicate(('*', '*'), None)
+        self.request.subpath = ('foo',)
+        result = matcher(None, self.request)
+        self.assertFalse(result)
+
+    def test_include(self):
+        """ Including pyramid_duh.view adds the predicate method """
+        config = MagicMock()
+        includeme(config)
+        config.add_view_predicate.assert_called_with('subpath',
+                                                     SubpathPredicate)
+
+
 # pylint: disable=C0111,E1101,E1121
-
-
 class TestAddslash(unittest.TestCase):
 
     """ Tests for @addslash """
@@ -120,7 +134,7 @@ class TestAddslash(unittest.TestCase):
     def test_addslash_redirect(self):
         """ addslash causes redirect if path_url doesn't end in / """
         @addslash
-        def myview(request):
+        def myview(request):  # pragma: no cover
             return 'foobar'
         context = object()
         request = DummyRequest()
@@ -132,7 +146,7 @@ class TestAddslash(unittest.TestCase):
     def test_addslash_redirect_query(self):
         """ addslash keeps the query string """
         @addslash
-        def myview(request):
+        def myview(request):  # pragma: no cover
             return 'foobar'
         context = object()
         request = DummyRequest()

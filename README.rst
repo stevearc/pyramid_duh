@@ -1,6 +1,7 @@
 Pyramid Duh
 ===========
 :Build: |build|_ |coverage|_
+:Documentation: http://pyramid_duh.readthedocs.org/en/latest/
 :Source: https://github.com/stevearc/pyramid_duh
 
 .. |build| image:: https://travis-ci.org/stevearc/pyramid_duh.png?branch=master
