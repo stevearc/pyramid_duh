@@ -3,6 +3,7 @@ from pyramid.httpexceptions import HTTPNotFound
 
 
 class ISmartLookupResource(object):
+
     """
     Resource base class that allows hierarchical lookup of attributes
 
@@ -38,30 +39,32 @@ class ISmartLookupResource(object):
 
 
 class IStaticResource(ISmartLookupResource):
+
     """ Simple resource base class for static-mapping of paths """
     subobjects = {}
     request = None
 
-    def __init__(self, request):
-        self.request = request
-
     def __getitem__(self, name):
-        child = self.subobjects[name](self.request)
+        child = self.subobjects[name]()
         child.__parent__ = self
         child.__name__ = name
         return child
 
 
 class IModelResource(ISmartLookupResource):
+
     """
     Resource base class for wrapping models in a sqlalchemy database
+
+    Notes
+    -----
+    Requires any parent node to set the 'request' attribute
 
     """
     __model__ = None
     __modelname__ = 'model'
 
-    def __init__(self, request, model=None):
-        self.request = request
+    def __init__(self, model=None):
         setattr(self, self.__modelname__, model)
 
     @property
@@ -88,7 +91,7 @@ class IModelResource(ISmartLookupResource):
         Override this if you wish to allow 'PUT' request to create a model
 
         """
-        raise KeyError()
+        raise KeyError
 
     def __getitem__(self, name):
         if getattr(self, self.__modelname__) is None:
@@ -96,8 +99,10 @@ class IModelResource(ISmartLookupResource):
             if model is None and self.request.method == 'PUT':
                 model = self.create_model(name)
             if model is not None:
-                child = self.__class__(self.request, model)
+                child = self.__class__(model)
                 child.__parent__ = self
                 child.__name__ = name
                 return child
-        raise HTTPNotFound()
+            else:
+                raise HTTPNotFound()
+        raise KeyError
