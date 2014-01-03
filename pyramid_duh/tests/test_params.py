@@ -481,7 +481,20 @@ class TestArgify(unittest.TestCase):
         validate = lambda x: x.startswith('foo')
 
         @argify(field=(string_type, validate))
-        def base_req(request, field):
+        def base_req(request, field):  # pragma: no cover
+            return field
+        context = object()
+        request = DummyRequest()
+        request.params = {'field': 'myfield'}
+        with self.assertRaises(HTTPBadRequest):
+            base_req(context, request)
+
+    def test_validate_kwargs_failure(self):
+        """ if argify fails validation check for kwargs, raise exception """
+        validate = lambda x: x.startswith('foo')
+
+        @argify(field=(string_type, validate))
+        def base_req(request, field=None):  # pragma: no cover
             return field
         context = object()
         request = DummyRequest()

@@ -1,3 +1,3 @@
-0.0.0
+0.1.0
 -----
-* First version
+* Package released into the wild
