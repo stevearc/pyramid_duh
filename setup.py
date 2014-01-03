@@ -20,7 +20,7 @@ if sys.version_info[:2] < (2, 7):
 if __name__ == "__main__":
     setup(
         name='pyramid_duh',
-        description='Useful utilities for pyramid servers',
+        description='Useful utilities for every pyramid app',
         long_description=README + '\n\n' + CHANGES,
         classifiers=[
             'Programming Language :: Python',

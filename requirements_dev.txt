@@ -4,3 +4,5 @@ autopep8
 tox
 nose
 mock
+sphinx
+numpydoc

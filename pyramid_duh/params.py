@@ -11,7 +11,7 @@ from pyramid.settings import asbool
 from zope.interface.exceptions import DoesNotImplement
 from zope.interface.verify import verifyObject
 # pylint: enable=F0401,E0611
-from .compat import string_type, bytes_types, num_types, is_string
+from .compat import string_type, bytes_types, num_types, is_string, is_num
 
 
 NO_ARG = object()
@@ -118,6 +118,11 @@ def _param_from_dict(request, params, name, default=NO_ARG, type=None,
             return datetime.datetime.fromtimestamp(float(arg))
         elif type is datetime.timedelta:
             return datetime.timedelta(seconds=float(arg))
+        elif type is datetime.date:
+            if is_num(arg) or arg.isdigit():
+                return datetime.datetime.fromtimestamp(int(arg)).date()
+            else:
+                return datetime.datetime.strptime(arg, '%Y-%m-%d').date()
         elif type is bool:
             return asbool(arg)
         elif type in num_types:

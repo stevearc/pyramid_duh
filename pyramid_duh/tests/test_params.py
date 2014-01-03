@@ -65,10 +65,30 @@ class TestParam(unittest.TestCase):
         self.assertEquals(field, 'myfield')
         self.assertTrue(is_string(field, strict=True))
 
+    def test_unicode_json_body(self):
+        """ Pull unicode params out of json body """
+        request = DummyRequest()
+        request.params = {}
+        request.json_body = {'field': 'myfield'}
+        request.headers = {'Content-Type': 'application/json'}
+        field = _param(request, 'field')
+        self.assertEquals(field, 'myfield')
+        self.assertTrue(is_string(field, strict=True))
+
     def test_str_param(self):
         """ Pull binary string param off of request object """
         request = DummyRequest()
         request.params = {'field': 'myfield'}
+        field = _param(request, 'field', type=bytes)
+        self.assertEquals(field, b'myfield')
+        self.assertTrue(is_bytes(field))
+
+    def test_str_json_body(self):
+        """ Pull str params out of json body """
+        request = DummyRequest()
+        request.params = {}
+        request.json_body = {'field': 'myfield'}
+        request.headers = {'Content-Type': 'application/json'}
         field = _param(request, 'field', type=bytes)
         self.assertEquals(field, b'myfield')
         self.assertTrue(is_bytes(field))
@@ -95,12 +115,46 @@ class TestParam(unittest.TestCase):
         field = _param(request, 'field', type=list)
         self.assertEquals(field, [1, 2, 3])
 
+    def test_list_json_body(self):
+        """ Pull list params out of json body """
+        request = DummyRequest()
+        request.params = {}
+        request.json_body = {'field': [1, 2, 3]}
+        request.headers = {'Content-Type': 'application/json'}
+        field = _param(request, 'field', type=list)
+        self.assertEquals(field, [1, 2, 3])
+
     def test_dict_param(self):
-        """ Pull encoded lists off of request object """
+        """ Pull encoded dicts off of request object """
         request = DummyRequest()
         request.params = {'field': json.dumps({'a': 'b'})}
         field = _param(request, 'field', type=dict)
         self.assertEquals(field, {'a': 'b'})
+
+    def test_dict_json_body(self):
+        """ Pull dict params out of json body """
+        request = DummyRequest()
+        request.params = {}
+        request.json_body = {'field': {'a': 'b'}}
+        request.headers = {'Content-Type': 'application/json'}
+        field = _param(request, 'field', type=dict)
+        self.assertEquals(field, {'a': 'b'})
+
+    def test_set_param(self):
+        """ Pull encoded sets off of request object """
+        request = DummyRequest()
+        request.params = {'field': json.dumps(['a', 'b'])}
+        field = _param(request, 'field', type=set)
+        self.assertEquals(field, set(['a', 'b']))
+
+    def test_set_json_body(self):
+        """ Pull set params out of json body """
+        request = DummyRequest()
+        request.params = {}
+        request.json_body = {'field': set(['a', 'b'])}
+        request.headers = {'Content-Type': 'application/json'}
+        field = _param(request, 'field', type=set)
+        self.assertEquals(field, set(['a', 'b']))
 
     def test_datetime_param(self):
         """ Pull datetime off of request object """
@@ -110,10 +164,45 @@ class TestParam(unittest.TestCase):
         field = _param(request, 'field', type=datetime)
         self.assertEquals(time.mktime(field.timetuple()), now)
 
+    def test_datetime_json_body(self):
+        """ Pull datetime params out of json body """
+        request = DummyRequest()
+        request.params = {}
+        now = int(time.time())
+        request.json_body = {'field': now}
+        request.headers = {'Content-Type': 'application/json'}
+        field = _param(request, 'field', type=datetime)
+        self.assertEquals(time.mktime(field.timetuple()), now)
+
+    def test_date_param(self):
+        """ Pull date off of request object as YYYY-mm-dd """
+        request = DummyRequest()
+        request.params = {'field': '2014-1-1'}
+        field = _param(request, 'field', type=datetime.date)
+        self.assertEquals(field, datetime.date(2014, 1, 1))
+
+    def test_date_param_ts(self):
+        """ Pull date off of request object as unix ts """
+        request = DummyRequest()
+        now_date = datetime.date(2014, 1, 1)
+        now_ts = time.mktime(now_date.timetuple())
+        request.params = {'field': now_ts}
+        field = _param(request, 'field', type=datetime.date)
+        self.assertEquals(field, now_date)
+
     def test_bool_param(self):
         """ Pull bool off of request object """
         request = DummyRequest()
         request.params = {'field': 'true'}
+        field = _param(request, 'field', type=bool)
+        self.assertTrue(field is True)
+
+    def test_bool_json_body(self):
+        """ Pull bool params out of json body """
+        request = DummyRequest()
+        request.params = {}
+        request.headers = {'Content-Type': 'application/json'}
+        request.json_body = {'field': True}
         field = _param(request, 'field', type=bool)
         self.assertTrue(field is True)
 
@@ -174,69 +263,13 @@ class TestParam(unittest.TestCase):
         self.assertEqual(field.alpha, data['alpha'])
         self.assertEqual(field.beta, data['beta'])
 
-    def test_unicode_json_body(self):
-        """ Pull unicode params out of json body """
-        request = DummyRequest()
-        request.params = {}
-        request.json_body = {'field': 'myfield'}
-        request.headers = {'Content-Type': 'application/json'}
-        field = _param(request, 'field')
-        self.assertEquals(field, 'myfield')
-        self.assertTrue(is_string(field, strict=True))
-
-    def test_str_json_body(self):
-        """ Pull str params out of json body """
-        request = DummyRequest()
-        request.params = {}
-        request.json_body = {'field': 'myfield'}
-        request.headers = {'Content-Type': 'application/json'}
-        field = _param(request, 'field', type=bytes)
-        self.assertEquals(field, b'myfield')
-        self.assertTrue(is_bytes(field))
-
-    def test_list_json_body(self):
-        """ Pull list params out of json body """
-        request = DummyRequest()
-        request.params = {}
-        request.json_body = {'field': [1, 2, 3]}
-        request.headers = {'Content-Type': 'application/json'}
-        field = _param(request, 'field', type=list)
-        self.assertEquals(field, [1, 2, 3])
-
-    def test_dict_json_body(self):
-        """ Pull dict params out of json body """
-        request = DummyRequest()
-        request.params = {}
-        request.json_body = {'field': {'a': 'b'}}
-        request.headers = {'Content-Type': 'application/json'}
-        field = _param(request, 'field', type=dict)
-        self.assertEquals(field, {'a': 'b'})
-
-    def test_datetime_json_body(self):
-        """ Pull datetime params out of json body """
-        request = DummyRequest()
-        request.params = {}
-        now = int(time.time())
-        request.json_body = {'field': now}
-        request.headers = {'Content-Type': 'application/json'}
-        field = _param(request, 'field', type=datetime)
-        self.assertEquals(time.mktime(field.timetuple()), now)
-
-    def test_bool_json_body(self):
-        """ Pull bool params out of json body """
-        request = DummyRequest()
-        request.params = {}
-        request.headers = {'Content-Type': 'application/json'}
-        request.json_body = {'field': True}
-        field = _param(request, 'field', type=bool)
-        self.assertTrue(field is True)
-
 
 # pylint: disable=E1120,W0613,C0111
 
 class TestArgify(unittest.TestCase):
 
     """ Tests for the argify decorator """
+
     def test_unicode(self):
         """ Pull unicode parameters from request """
         @argify
