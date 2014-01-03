@@ -42,7 +42,6 @@ class IStaticResource(ISmartLookupResource):
 
     """ Simple resource base class for static-mapping of paths """
     subobjects = {}
-    request = None
 
     def __getitem__(self, name):
         child = self.subobjects[name]()
