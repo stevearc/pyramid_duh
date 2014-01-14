@@ -98,9 +98,18 @@ to get it that indexing the subpath?
 
 Ooooooooooooooooooooooo
 
-Yeah, and it does PCRE as well. In case you need that. Check out the docs on
-:class:`~pyramid_duh.view.SubpathPredicate` for all of the formats, and
-:meth:`~pyramid_duh.view.match` for details on match flags.
+Yeah, and it does PCRE as well. In case you need that.
+
+.. code-block:: python
+
+    @view_config(context=MyCtxt, name='foobar', subpath=('type/post|tweet/r', 'id/*'))
+    def my_view(request):
+        item_type = request.named_subpaths['type']
+        id = request.named_subpaths['id']
+        # do things
+
+Check the docs on :class:`~pyramid_duh.view.SubpathPredicate` for all of the
+formats, and :meth:`~pyramid_duh.view.match` for details on match flags.
 
 How Does I Do?
 --------------
