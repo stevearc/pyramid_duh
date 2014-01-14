@@ -1,11 +1,11 @@
 """ Tests for settings utils """
+from pyramid_duh.settings import asdict
+
 
 try:
     import unittest2 as unittest  # pylint: disable=F0401
 except ImportError:
     import unittest
-
-from pyramid_duh.settings import asdict
 
 
 class TestAsDict(unittest.TestCase):

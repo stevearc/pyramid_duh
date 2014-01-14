@@ -1,13 +1,16 @@
 # encoding: utf-8
 """ Tests for view utilities """
-import unittest
-from mock import MagicMock, patch, call
+from mock import MagicMock
 from pyramid.httpexceptions import HTTPFound
 from pyramid.testing import DummyRequest
 from pyramid_duh.params import argify
 from pyramid_duh.view import SubpathPredicate, addslash, includeme
-import pyramid_duh
-from pyramid.config import Configurator
+
+
+try:
+    import unittest2 as unittest  # pylint: disable=F0401
+except ImportError:
+    import unittest
 
 
 class TestSubpath(unittest.TestCase):
