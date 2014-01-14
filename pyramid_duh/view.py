@@ -56,7 +56,7 @@ def match(pattern, path, flags):
                 re_flags |= re.A  # pylint: disable=E1101
         return re.match('^%s$' % pattern, path, re_flags)
     else:
-        return fnmatch.fnmatch(path, pattern)
+        return fnmatch.fnmatchcase(path, pattern)
 
 
 class SubpathPredicate(object):

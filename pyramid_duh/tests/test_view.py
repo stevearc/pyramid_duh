@@ -26,6 +26,13 @@ class TestSubpath(unittest.TestCase):
         result = matcher(None, self.request)
         self.assertTrue(result)
 
+    def test_glob_match_case(self):
+        """ Glob maching respects case """
+        matcher = SubpathPredicate(('foo'), None)
+        self.request.subpath = ('FOO',)
+        result = matcher(None, self.request)
+        self.assertFalse(result)
+
     def test_len_mismatch(self):
         """ Subpath mismatch if incorrect length """
         matcher = SubpathPredicate(('*'), None)
