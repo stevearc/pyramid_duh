@@ -44,7 +44,7 @@ if __name__ == "__main__":
         ],
         author='Steven Arcangeli',
         author_email='arcangeli07@gmail.com',
-        url='http://github.com/stevearc/pyramid_duh',
+        url='http://pyramid-duh.readthedocs.org/',
         keywords='pyramid util utility',
         license='MIT',
         zip_safe=False,
