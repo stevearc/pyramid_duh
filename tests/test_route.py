@@ -61,6 +61,16 @@ class TestSmartLookup(unittest.TestCase):
         with self.assertRaises(AttributeError):
             resource._foobar
 
+    def test_nested_request_attr(self):
+        """ ISmartLookupResource can fetch a request from a nested path """
+        grandparent = IStaticResource()
+        parent = IStaticResource()
+        parent.__parent__ = grandparent
+        resource = IStaticResource()
+        resource.__parent__ = parent
+        grandparent.request = object()
+        self.assertEqual(resource.request, grandparent.request)
+
 
 class TestStaticResource(unittest.TestCase):
 

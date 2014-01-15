@@ -3,7 +3,7 @@ import os
 import sys
 
 from setuptools import setup, find_packages
-from version_helper import git_version
+from pyramid_duh_version import git_version
 
 
 HERE = os.path.abspath(os.path.dirname(__file__))
@@ -12,6 +12,10 @@ CHANGES = open(os.path.join(HERE, 'CHANGES.rst')).read()
 
 REQUIREMENTS = [
     'pyramid',
+]
+
+TEST_REQUIREMENTS = [
+    'mock',
 ]
 
 if sys.version_info[:2] < (2, 7):
@@ -24,8 +28,10 @@ if __name__ == "__main__":
         long_description=README + '\n\n' + CHANGES,
         classifiers=[
             'Programming Language :: Python',
+            'Programming Language :: Python :: 2',
             'Programming Language :: Python :: 2.6',
             'Programming Language :: Python :: 2.7',
+            'Programming Language :: Python :: 3',
             'Programming Language :: Python :: 3.2',
             'Programming Language :: Python :: 3.3',
             'Development Status :: 4 - Beta',
@@ -41,8 +47,9 @@ if __name__ == "__main__":
         license='MIT',
         zip_safe=False,
         include_package_data=True,
-        packages=find_packages(),
+        packages=find_packages(exclude=('tests',)),
         install_requires=REQUIREMENTS,
-        tests_require=REQUIREMENTS,
-        **git_version()
+        tests_require=REQUIREMENTS + TEST_REQUIREMENTS,
+        test_suite='tests',
+        **git_version('pyramid_duh')
     )

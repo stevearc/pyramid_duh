@@ -37,8 +37,9 @@ def match(pattern, path, flags):
     ====  ==============================================
     r     Match using PCRE (default glob)
     i     Case-insensitive match (must be used with 'r')
-    a     ASCII-only match (must be used with 'r')
+    a     ASCII-only match (must be used with 'r', python 3 only)
     ?     Path is optional (return True if path is None)
+    ====  ==============================================
 
     """
     if path is None:
@@ -55,7 +56,7 @@ def match(pattern, path, flags):
                 re_flags |= re.A  # pylint: disable=E1101
         return re.match('^%s$' % pattern, path, re_flags)
     else:
-        return fnmatch.fnmatch(path, pattern)
+        return fnmatch.fnmatchcase(path, pattern)
 
 
 class SubpathPredicate(object):
@@ -90,8 +91,7 @@ class SubpathPredicate(object):
 
     .. code-block:: python
 
-        @view_config(context=Root, name='simple', subpath=('package/*'))
-        @view_config(context=Root, name='simple', subpath=('package/*', 'version/*'))
+        @view_config(context=Root, name='simple', subpath=('package/*', 'version/*/?'))
         def simple(request)
             pkg = request.named_subpaths['package']
             version = request.named_subpaths.get('version')

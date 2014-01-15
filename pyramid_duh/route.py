@@ -33,6 +33,9 @@ class ISmartLookupResource(object):
             try:
                 return getattr(current, name)
             except AttributeError:
+                # If this node was doing smart lookup, we don't need to
+                if isinstance(current, ISmartLookupResource):
+                    break
                 current = current.__parent__
         raise AttributeError("'%s' not found on any parents of %s" %
                              (name, self))
@@ -42,7 +45,6 @@ class IStaticResource(ISmartLookupResource):
 
     """ Simple resource base class for static-mapping of paths """
     subobjects = {}
-    request = None
 
     def __getitem__(self, name):
         child = self.subobjects[name]()

@@ -1,3 +1,9 @@
+0.1.1
+-----
+* Bug fix: IStaticResource fails to look up self.request if nested 2-deep
+* Bug fix: Name collisions with version_helper.py
+* Bug fix: Subpath glob matching always respects case
+
 0.1.0
 -----
 * Package released into the wild
