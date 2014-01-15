@@ -1,3 +1,5 @@
+.. _subpath:
+
 Subpath Predicate
 =================
 One of the problems people have with pyramid's traversal is that it doesn't
@@ -87,7 +89,7 @@ Oh, let's say you want the subpaths to match ``/post/{id}`` but nothing else.
         # do things
 
 Oh, I guess that was easy too. But I want that post id. Is there a better way
-to get it that indexing the subpath?
+to get it than indexing the subpath?
 
 .. code-block:: python
 
@@ -113,7 +115,8 @@ formats, and :meth:`~pyramid_duh.view.match` for details on match flags.
 
 How Does I Do?
 --------------
-Just include ``pyramid_duh`` (which comes with parameter magic), or just
+Include ``pyramid_duh`` in your app (which comes with :ref:`parameter magic
+<params>`), or if you only want the subpath predicate you can include
 ``pyramid_duh.view``:
 
 .. code-block:: python

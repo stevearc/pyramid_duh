@@ -1,3 +1,5 @@
+.. _params:
+
 Request Parameters
 ==================
 Why does getting request parameters suck so hard in pyramid? Let's look at the
@@ -148,7 +150,9 @@ for the argument inspection to work properly.
 
 OMFG HOW DO I USE THIS
 ----------------------
-If you want to use ``request.param``, you can include ``pyramid_duh`` (which comes with some other things), or just ``pyramid_duh.params``:
+Include ``pyramid_duh`` in your app (which comes with some :ref:`other things
+<subpath>`), or if you only want the ``param()`` method you can include
+``pyramid_duh.params``:
 
 .. code-block:: python
 
@@ -170,3 +174,58 @@ To use argify just import it. No includes necessary.
     @argify
     def my_view(request, foo, bar, baz='wibbly'):
         # do stuff
+
+Custom Parameter Types
+----------------------
+You've gotten this far, which means you're sold on the
+auto-type-converting-smart-responding-parameter-reading. But you're hungry for
+more. You want to auto-convert to your own super-special ``Unicorn`` data type.
+Well who doesn't?
+
+Here are the POST parameters:
+
+.. code-block:: javascript
+
+    {
+        username: "stevearc",
+        pet: {
+            "name": "Sparklelord",
+            "sparkly": true,
+            "cuddly": true
+        }
+    }
+
+And here is the code to parse that mess:
+
+.. code-block:: python
+
+    class Unicorn(object):
+        def __init__(name, sparkly, cuddly):
+            self.name = name
+            self.sparkly = sparkly
+            self.cuddly = cuddly
+
+        @classmethod
+        def __from_json__(cls, data):
+            return cls(**data)
+
+
+    @argify(pet=Unicorn)
+    def set_user_pet(request, username, pet):
+        # Set user pet
+
+The ``__from_json__`` method can be a classmethod or a staticmethod, and the
+signature must be either ``(arg)`` or ``(request, arg)``.
+
+You can also pass in a factory function as the type:
+
+.. code-block:: python
+
+    def natural_number(num):
+        if num % 1 != 0 or num < 1:
+            raise HTTPBadRequest("%s is not a natural number" % num)
+        return int(num)
+
+    @argify(age=natural_number)
+    def set_age(request, username, age):
+        # Set user age
