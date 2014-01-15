@@ -29,3 +29,5 @@ Indices and tables
 TODO
 ----
 * User-defined types that can consume multiple parameters
+* Support @argify on view methods & classes
+* Addslash should be a view predicate

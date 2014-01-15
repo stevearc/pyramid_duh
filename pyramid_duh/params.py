@@ -162,24 +162,30 @@ def argify(*args, **type_kwargs):
 
     Notes
     -----
-    Here is a sample use case::
+    Here is a sample use case:
+
+    .. code-block:: python
 
         @argify(foo=dict, ts=datetime)
         def handle_request(request, foo, ts, bar='baz'):
             # do request handling
 
-    No special type is required for strings::
+    No special type is required for strings:
+
+    .. code-block:: python
 
         @argify
         def handle_request(request, foo, bar='baz'):
             # do request handling (both 'foo' and 'bar' are strings)
 
-    If any positional arguments are missing, it will raise a HTTPBadRequest
-    exception. If any keyword arguments are missing, it will simply use
-    whatever the default value is.
+    If any positional arguments are missing, it will raise a
+    :class:`~pyramid.httpexceptions.HTTPBadRequest` exception. If any keyword
+    arguments are missing, it will simply use whatever the default value is.
 
     Note that unit tests should be unaffected by this decorator. This should be
-    valid::
+    valid:
+
+    .. code-block:: python
 
         @argify
         def myrequest(request, var1, var2='foo'):

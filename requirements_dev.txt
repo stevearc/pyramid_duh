@@ -6,3 +6,4 @@ nose
 mock
 sphinx
 numpydoc
+sphinx_rtd_theme

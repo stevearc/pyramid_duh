@@ -200,7 +200,7 @@ And here is the code to parse that mess:
 .. code-block:: python
 
     class Unicorn(object):
-        def __init__(name, sparkly, cuddly):
+        def __init__(self, name, sparkly, cuddly):
             self.name = name
             self.sparkly = sparkly
             self.cuddly = cuddly
