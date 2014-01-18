@@ -41,7 +41,8 @@ def _param(request, name, default=NO_ARG, type=None, validate=None):
 
     """
     params, loads = _params_from_request(request)
-    return _param_from_dict(request, params, name, default, type, validate, loads)
+    return _param_from_dict(request, params, name, default, type, validate,
+                            loads)
 
 
 def _params_from_request(request):
@@ -216,50 +217,67 @@ def argify(*args, **type_kwargs):
         @functools.wraps(fxn)
         def param_twiddler(*args, **kwargs):
             """ The actual wrapper function that pulls out the params """
-            # pyramid always calls with (context, request) arguments
-            if len(args) == 2 and len(kwargs) == 0 and is_request(args[1]):
-                context, request = args[0], args[1]
-                scope = {}
+            self = None
+            if 'self' in required:
+                self = args[0]
+                if not hasattr(self, 'request'):
+                    raise AttributeError("View class %s has no attribute "
+                                         "'request'" % self)
+                request = self.request
+                context = getattr(self, 'context', None)
+                # Multiple args passed in, it's likely a unit test.
+                # Don't alter args at all.
+                if len(args) != 1 or len(kwargs) != 0:
+                    return fxn(*args, **kwargs)
 
-                params, loads = _params_from_request(request)
-                params = dict(params)
-                for param in required:
-                    type_spec = type_kwargs.get(param)
-                    if (isinstance(type_spec, tuple) or
-                            isinstance(type_spec, list)):
-                        type_def, validate = type_spec
-                    else:
-                        type_def = type_spec
-                        validate = None
-                    if param == 'context':
-                        scope['context'] = context
-                    elif param == 'request':
-                        scope['request'] = request
-                    else:
-                        scope[param] = _param_from_dict(
-                            request, params, param, NO_ARG,
-                            type_def, validate, loads=loads)
-                        params.pop(param)
-                no_val = object()
-                for param in optional:
-                    type_spec = type_kwargs.get(param)
-                    if (isinstance(type_spec, tuple) or
-                            isinstance(type_spec, list)):
-                        type_def, validate = type_spec
-                    else:
-                        type_def = type_spec
-                        validate = None
-                    val = _param_from_dict(request, params, param, no_val,
-                                           type_def, validate, loads)
-                    params.pop(param, None)
-                    if val is not no_val:
-                        scope[param] = val
-                if argspec.keywords is not None:
-                    scope.update(params)
-                return fxn(**scope)
-            else:
-                # Otherwise, it's likely a unit test. Don't alter args at all.
+            # pyramid always calls with (context, request) arguments
+            # If it doesn't, it's likely a unit test. Don't alter args at all.
+            elif not (len(args) == 2 and len(kwargs) == 0 and
+                      is_request(args[1])):
                 return fxn(*args, **kwargs)
+            else:
+                context, request = args[0], args[1]
+
+            scope = {}
+
+            params, loads = _params_from_request(request)
+            params = dict(params)
+            for param in required:
+                type_spec = type_kwargs.get(param)
+                if (isinstance(type_spec, tuple) or
+                        isinstance(type_spec, list)):
+                    type_def, validate = type_spec
+                else:
+                    type_def = type_spec
+                    validate = None
+                if param == 'context':
+                    scope['context'] = context
+                elif param == 'request':
+                    scope['request'] = request
+                elif param == 'self':
+                    scope['self'] = self
+                else:
+                    scope[param] = _param_from_dict(
+                        request, params, param, NO_ARG,
+                        type_def, validate, loads=loads)
+                    params.pop(param)
+            no_val = object()
+            for param in optional:
+                type_spec = type_kwargs.get(param)
+                if (isinstance(type_spec, tuple) or
+                        isinstance(type_spec, list)):
+                    type_def, validate = type_spec
+                else:
+                    type_def = type_spec
+                    validate = None
+                val = _param_from_dict(request, params, param, no_val,
+                                       type_def, validate, loads)
+                params.pop(param, None)
+                if val is not no_val:
+                    scope[param] = val
+            if argspec.keywords is not None:
+                scope.update(params)
+            return fxn(**scope)
         return param_twiddler
 
     if len(args) == 1 and len(type_kwargs) == 0 and inspect.isfunction(args[0]):

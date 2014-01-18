@@ -23,6 +23,7 @@ Versions
 Version    Build            Coverage
 =========  ===============  ========
 master_    |build-master|_  |coverage-master|_
+0.1.1_     |build-0.1.1|_   |coverage-0.1.1|_
 0.1.0_     |build-0.1.0|_   |coverage-0.1.0|_
 =========  ===============  ========
 
@@ -31,6 +32,12 @@ master_    |build-master|_  |coverage-master|_
 .. _build-master: https://travis-ci.org/stevearc/pyramid_duh
 .. |coverage-master| image:: https://coveralls.io/repos/stevearc/pyramid_duh/badge.png?branch=master
 .. _coverage-master: https://coveralls.io/r/stevearc/pyramid_duh?branch=master
+
+.. _0.1.1: ../0.1.1/
+.. |build-0.1.1| image:: https://travis-ci.org/stevearc/pyramid_duh.png?branch=0.1.1
+.. _build-0.1.1: https://travis-ci.org/stevearc/pyramid_duh
+.. |coverage-0.1.1| image:: https://coveralls.io/repos/stevearc/pyramid_duh/badge.png?branch=0.1.1
+.. _coverage-0.1.1: https://coveralls.io/r/stevearc/pyramid_duh?branch=0.1.1
 
 .. _0.1.0: ../0.1.0/
 .. |build-0.1.0| image:: https://travis-ci.org/stevearc/pyramid_duh.png?branch=0.1.0
@@ -65,5 +72,3 @@ Indices and tables
 TODO
 ----
 * User-defined types that can consume multiple parameters
-* Support @argify on view methods & classes
-* Addslash should be a view predicate

@@ -19,7 +19,7 @@ TEST_REQUIREMENTS = [
 ]
 
 if sys.version_info[:2] < (2, 7):
-    REQUIREMENTS.extend(['unittest2'])
+    TEST_REQUIREMENTS.extend(['unittest2'])
 
 if __name__ == "__main__":
     setup(

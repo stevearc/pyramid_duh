@@ -501,3 +501,50 @@ class TestArgify(unittest.TestCase):
         request.params = {'field': 'myfield'}
         with self.assertRaises(HTTPBadRequest):
             base_req(context, request)
+
+    def test_decorate_class(self):
+        """ Argify can decorate view methods of a class """
+        class MyView(object):
+            def __init__(self, request):
+                self.request = request
+
+            @argify
+            def myview(self, field):
+                return field
+
+        request = DummyRequest()
+        request.params = {'field': 'foobar'}
+        vc = MyView(request)
+        val = vc.myview()
+        self.assertEquals(val, 'foobar')
+
+    def test_decorate_class_pass_args(self):
+        """ Can pass arguments directly to decorated class """
+
+        class MyView(object):
+            def __init__(self, request):
+                self.request = request
+
+            @argify
+            def myview(self, field):
+                return field
+
+        request = DummyRequest()
+        vc = MyView(request)
+        val = vc.myview('foobar')
+        self.assertEquals(val, 'foobar')
+
+    def test_bad_view_class(self):
+        """ View classes must have a 'request' attribute """
+        class MyView(object):
+            def __init__(self, request):
+                pass
+
+            @argify
+            def myview(self, field):
+                return field
+
+        request = DummyRequest()
+        vc = MyView(request)
+        with self.assertRaises(AttributeError):
+            vc.myview('foobar')
