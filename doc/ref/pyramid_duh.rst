@@ -1,13 +1,6 @@
 pyramid_duh package
 ===================
 
-Subpackages
------------
-
-.. toctree::
-
-    pyramid_duh.tests
-
 Submodules
 ----------
 

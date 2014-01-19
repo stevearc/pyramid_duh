@@ -1,3 +1,5 @@
+.. _subpath:
+
 Subpath Predicate
 =================
 One of the problems people have with pyramid's traversal is that it doesn't
@@ -78,16 +80,17 @@ behavior. Awesome.
 
 BUT NOT AWESOME ENOUGH. GIVE ME MOARRRRR
 
-Oh, let's say you want the subpaths to match ``/post/{id}`` but nothing else.
+Let's say you want the subpaths to match ``/post/{id}`` but nothing else.
 
 .. code-block:: python
 
     @view_config(context=MyCtxt, name='foobar', subpath=('post', '*'))
     def my_view(request):
+        id = request.subpath[0]
         # do things
 
 Oh, I guess that was easy too. But I want that post id. Is there a better way
-to get it that indexing the subpath?
+to get it than indexing the subpath?
 
 .. code-block:: python
 
@@ -102,7 +105,7 @@ Yeah, and it does PCRE as well. In case you need that.
 
 .. code-block:: python
 
-    @view_config(context=MyCtxt, name='foobar', subpath=('type/post|tweet/r', 'id/*'))
+    @view_config(context=MyCtxt, name='foobar', subpath=('type/(post|tweet)/r', 'id/*'))
     def my_view(request):
         item_type = request.named_subpaths['type']
         id = request.named_subpaths['id']
@@ -113,7 +116,8 @@ formats, and :meth:`~pyramid_duh.view.match` for details on match flags.
 
 How Does I Do?
 --------------
-Just include ``pyramid_duh`` (which comes with parameter magic), or just
+Include ``pyramid_duh`` in your app (which comes with :ref:`parameter magic
+<params>`), or if you only want the subpath predicate you can include
 ``pyramid_duh.view``:
 
 .. code-block:: python

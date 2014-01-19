@@ -292,6 +292,18 @@ class TestParam(unittest.TestCase):
         self.assertEqual(field.beta, data['beta'])
         self.assertEqual(field.request, request)
 
+    def test_object_param_path(self):
+        """ Type parameter can be a dotted path """
+        request = DummyRequest()
+        data = {'alpha': 'a', 'beta': 'b'}
+        request.params = {'field': json.dumps(data)}
+        field = _param(request, 'field',
+                       type='tests.test_params.ParamContainerFancy')
+        self.assertTrue(isinstance(field, ParamContainerFancy))
+        self.assertEqual(field.alpha, data['alpha'])
+        self.assertEqual(field.beta, data['beta'])
+        self.assertEqual(field.request, request)
+
     def test_object_param_simple(self):
         """ Hydrate an object from json data directly from constructor """
         request = DummyRequest()
@@ -339,7 +351,7 @@ class TestParam(unittest.TestCase):
             _param(request, 'field', validate=validate)
 
 
-# pylint: disable=E1120,W0613,C0111
+# pylint: disable=E1120,W0613,C0111,E1101
 class TestArgify(unittest.TestCase):
 
     """ Tests for the argify decorator """
@@ -501,3 +513,206 @@ class TestArgify(unittest.TestCase):
         request.params = {'field': 'myfield'}
         with self.assertRaises(HTTPBadRequest):
             base_req(context, request)
+
+    def test_decorate_class(self):
+        """ Argify can decorate view methods of a class """
+        class MyView(object):
+
+            def __init__(self, request):
+                self.request = request
+
+            @argify
+            def myview(self, field):
+                return field
+
+        request = DummyRequest()
+        request.params = {'field': 'foobar'}
+        vc = MyView(request)
+        val = vc.myview()
+        self.assertEquals(val, 'foobar')
+
+    def test_decorate_class_pass_args(self):
+        """ Can pass arguments directly to decorated class """
+
+        class MyView(object):
+
+            def __init__(self, request):
+                self.request = request
+
+            @argify
+            def myview(self, field):
+                return field
+
+        request = DummyRequest()
+        vc = MyView(request)
+        val = vc.myview('foobar')
+        self.assertEquals(val, 'foobar')
+
+    def test_bad_view_class(self):
+        """ View classes must have a 'request' attribute """
+        class MyView(object):
+
+            def __init__(self, request):
+                pass
+
+            @argify
+            def myview(self, field):
+                return field
+
+        request = DummyRequest()
+        vc = MyView(request)
+        with self.assertRaises(AttributeError):
+            vc.myview('foobar')
+
+    def test_dotted_path(self):
+        """ Argify type can be a dotted path to a type """
+
+        @argify(field='tests.test_params.ParamContainerFancy')
+        def myview(request, field):
+            return field
+
+        request = DummyRequest()
+        data = {'alpha': 'a', 'beta': 'b'}
+        request.params = {'field': json.dumps(data)}
+        context = object()
+        ret = myview(context, request)
+        self.assertTrue(isinstance(ret, ParamContainerFancy))
+        self.assertEqual(ret.alpha, data['alpha'])
+        self.assertEqual(ret.beta, data['beta'])
+        self.assertEqual(ret.request, request)
+
+    def test_multi_param_arg(self):
+        """ Args can be defined to consume multiple parameters """
+        class User(object):
+
+            def __init__(self, userid, access_token):
+                self.userid = userid
+                self.access_token = access_token
+
+            @classmethod
+            @argify(userid=int)
+            def __from_json__(cls, userid, access_token):
+                return cls(userid, access_token)
+
+        @argify(user=User)
+        def myview(request, user):
+            return user
+
+        context = object()
+        request = DummyRequest()
+        request.params = {'userid': 1, 'access_token': 'a'}
+        val = myview(context, request)
+        self.assertEqual(val.userid, 1)
+        self.assertEqual(val.access_token, 'a')
+
+    def test_multi_param_arg_test(self):
+        """ Tests can pass args directly to multi param view """
+        class User(object):
+
+            def __init__(self, userid, access_token):
+                self.userid = userid
+                self.access_token = access_token
+
+            @classmethod
+            @argify(userid=int)
+            def __from_json__(cls, userid, access_token):
+                return cls(userid, access_token)
+
+        @argify(user=User)
+        def myview(request, user):
+            return user
+
+        request = DummyRequest()
+        user = User(1, 'a')
+        val = myview(request, user)
+        self.assertTrue(val is user)
+
+    def test_multi_param_static_arg(self):
+        """ Classes with static methods can consume multiple parameters """
+        class User(object):
+
+            def __init__(self, userid, access_token):
+                self.userid = userid
+                self.access_token = access_token
+
+            @staticmethod
+            @argify(userid=int)
+            def __from_json__(userid, access_token):
+                return User(userid, access_token)
+
+        @argify(user=User)
+        def myview(request, user):
+            return user
+
+        context = object()
+        request = DummyRequest()
+        request.params = {'userid': 1, 'access_token': 'a'}
+        val = myview(context, request)
+        self.assertEqual(val.userid, 1)
+        self.assertEqual(val.access_token, 'a')
+
+    def test_multi_param_static_test(self):
+        """ Tests can pass args directly to static method multi param view """
+        class User(object):
+
+            def __init__(self, userid, access_token):
+                self.userid = userid
+                self.access_token = access_token
+
+            @staticmethod
+            @argify(userid=int)
+            def __from_json__(userid, access_token):
+                return User(userid, access_token)
+
+        @argify(user=User)
+        def myview(request, user):
+            return user
+
+        request = DummyRequest()
+        user = User(1, 'a')
+        val = myview(request, user)
+        self.assertTrue(val is user)
+
+    def test_multi_param_factory(self):
+        """ Factory functions can use multi-param args """
+        class User(object):
+
+            def __init__(self, userid, access_token):
+                self.userid = userid
+                self.access_token = access_token
+
+        @argify(userid=int)
+        def user_factory(userid, access_token):
+            return User(userid, access_token)
+
+        @argify(user=user_factory)
+        def myview(request, user):
+            return user
+
+        context = object()
+        request = DummyRequest()
+        request.params = {'userid': 1, 'access_token': 'a'}
+        val = myview(context, request)
+        self.assertEqual(val.userid, 1)
+        self.assertEqual(val.access_token, 'a')
+
+    def test_multi_param_factory_test(self):
+        """ Tests can pass args directly to view using multi-param factory """
+        class User(object):
+
+            def __init__(self, userid, access_token):
+                self.userid = userid
+                self.access_token = access_token
+
+        @argify(userid=int)
+        def user_factory(userid, access_token):
+            return User(userid, access_token)
+
+        @argify(user=user_factory)
+        def myview(request, user):
+            return user
+
+        request = DummyRequest()
+        user = User(1, 'a')
+        val = myview(request, user)
+        self.assertTrue(val is user)
