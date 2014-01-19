@@ -6,6 +6,7 @@ import inspect
 import json
 from pyramid.httpexceptions import HTTPBadRequest, HTTPException
 from pyramid.interfaces import IRequest
+from pyramid.path import DottedNameResolver
 from pyramid.settings import asbool
 # pylint: disable=F0401,E0611
 from zope.interface.exceptions import DoesNotImplement
@@ -15,6 +16,7 @@ from .compat import string_type, bytes_types, num_types, is_string, is_num
 
 
 NO_ARG = object()
+__resolver__ = DottedNameResolver(__name__)
 
 
 def _param(request, name, default=NO_ARG, type=None, validate=None):
@@ -93,6 +95,16 @@ def _param_from_dict(request, params, name, default=NO_ARG, type=None,
         If the parameter is missing and no default specified
 
     """
+    type = __resolver__.maybe_resolve(type)
+    # If the type arg is wrapped with @argify, then it is a multi-param
+    # argument and retrieves its parameters directly
+    if type is not None:
+        if getattr(type, '__argify__', False):
+            return type(request.context, request)
+        elif hasattr(type, '__from_json__'):
+            if getattr(type.__from_json__, '__argify__', False):
+                return type.__from_json__(request.context, request)
+
     try:
         arg = params[name]
     except KeyError:
@@ -217,7 +229,15 @@ def argify(*args, **type_kwargs):
         @functools.wraps(fxn)
         def param_twiddler(*args, **kwargs):
             """ The actual wrapper function that pulls out the params """
+            scope = {}
             self = None
+            # If @argify is decorating a classmethod, inject the 'cls' arg
+            # with no modification
+            if 'cls' in required:
+                args = list(args)
+                scope['cls'] = args.pop(0)
+                required.remove('cls')
+
             if 'self' in required:
                 self = args[0]
                 if not hasattr(self, 'request'):
@@ -238,8 +258,6 @@ def argify(*args, **type_kwargs):
             else:
                 context, request = args[0], args[1]
 
-            scope = {}
-
             params, loads = _params_from_request(request)
             params = dict(params)
             for param in required:
@@ -250,6 +268,7 @@ def argify(*args, **type_kwargs):
                 else:
                     type_def = type_spec
                     validate = None
+
                 if param == 'context':
                     scope['context'] = context
                 elif param == 'request':
@@ -260,7 +279,7 @@ def argify(*args, **type_kwargs):
                     scope[param] = _param_from_dict(
                         request, params, param, NO_ARG,
                         type_def, validate, loads=loads)
-                    params.pop(param)
+                    params.pop(param, None)
             no_val = object()
             for param in optional:
                 type_spec = type_kwargs.get(param)
@@ -278,7 +297,11 @@ def argify(*args, **type_kwargs):
             if argspec.keywords is not None:
                 scope.update(params)
             return fxn(**scope)
+
+        param_twiddler.__argify__ = True
         return param_twiddler
+
+    wrapper.__argify__ = True
 
     if len(args) == 1 and len(type_kwargs) == 0 and inspect.isfunction(args[0]):
         # @argify

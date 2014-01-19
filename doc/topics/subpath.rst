@@ -80,12 +80,13 @@ behavior. Awesome.
 
 BUT NOT AWESOME ENOUGH. GIVE ME MOARRRRR
 
-Oh, let's say you want the subpaths to match ``/post/{id}`` but nothing else.
+Let's say you want the subpaths to match ``/post/{id}`` but nothing else.
 
 .. code-block:: python
 
     @view_config(context=MyCtxt, name='foobar', subpath=('post', '*'))
     def my_view(request):
+        id = request.subpath[0]
         # do things
 
 Oh, I guess that was easy too. But I want that post id. Is there a better way
@@ -104,7 +105,7 @@ Yeah, and it does PCRE as well. In case you need that.
 
 .. code-block:: python
 
-    @view_config(context=MyCtxt, name='foobar', subpath=('type/post|tweet/r', 'id/*'))
+    @view_config(context=MyCtxt, name='foobar', subpath=('type/(post|tweet)/r', 'id/*'))
     def my_view(request):
         item_type = request.named_subpaths['type']
         id = request.named_subpaths['id']

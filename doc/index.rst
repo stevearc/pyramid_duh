@@ -68,7 +68,3 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-
-TODO
-----
-* User-defined types that can consume multiple parameters
