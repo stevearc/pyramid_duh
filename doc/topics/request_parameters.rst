@@ -266,31 +266,21 @@ Let's look at a new set of POST parameters;
 
     {
         name: "Sparklelord",
-        friend_secret: "Radical",
+        secret: "Radical",
     }
 
-If you want to log in with these credentials, here is a gross way of doing that:
-
-.. code-block:: python
-
-    def fetch_unicorn(request, name):
-        friend_secret = request.param('friend_secret')
-        request.db.query_for_unicorn(name, friend_secret)
-
-    @argify(name=fetch_unicorn)
-    def make_rainbows(request, name):
-        # Make some fukkin' rainbows
-
-The obvious problem here is that we've injected a ``Unicorn`` instance as the
-``name`` property, which just doesn't make sense and isn't very pretty. The
-solution is to decorate your type factory method with, you guessed it,
-``@argify``.
+Let's say you want to pass up these parameters as login credentials. You would
+like to fetch the named Unicorn from the database and use that in your view.
+What would you call that argument? ``unicorn`` would make sense, but there
+aren't any parameters named ``unicorn``, so how would you inject a parameter
+that is generated from multiple request parameters? All you need to do is take
+your type factory function and decorate it with ``@argify`` as well.
 
 .. code-block:: python
 
     @argify
-    def fetch_unicorn(request, name, friend_secret):
-        request.db.query_for_unicorn(name, friend_secret)
+    def fetch_unicorn(request, name, secret):
+        return request.db.query_for_unicorn(name, secret)
 
     @argify(unicorn=fetch_unicorn)
     def make_rainbows(request, unicorn):
