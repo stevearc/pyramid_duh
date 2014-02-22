@@ -2,155 +2,9 @@
 
 Request Parameters
 ==================
-Why does getting request parameters suck so hard in pyramid? Let's look at the
-problem. Say we want to register a new user with a username, password, and
-birthdate. Your view might look like this:
-
-.. code-block:: python
-
-    def register_user(request):
-        username = request.POST['username']
-        password = request.POST['password']
-        birthdate = request.POST['birthdate']
-        # insert into database
-
-Great. That's great. Wait, what's the birthdate again? A string? Uh oh...let's
-fix that:
-
-.. code-block:: python
-
-    def register_user(request):
-        username = request.POST['username']
-        password = request.POST['password']
-        bd_ts = int(request.POST['birthdate'])
-        birthdate = datetime.fromtimestamp(bd_ts).date()
-        # insert into database
-
-Okay, now that works. But what happens if someone forgets to pass up the
-birthdate? ``KeyError``! Which will turn into a 500! That's not right. Let's
-fix it:
-
-.. code-block:: python
-
-    def register_user(request):
-        try:
-            username = request.POST['username']
-            password = request.POST['password']
-            bd_ts = int(request.POST['birthdate'])
-            birthdate = datetime.fromtimestamp(bd_ts).date()
-        except KeyError:
-            raise HTTPBadRequest("Missing argument")
-        # insert into database
-
-Better. But what if the user passes up a birthdate that looks like ``'YYYY-mm-dd'``?
-
-.. code-block:: python
-
-    def register_user(request):
-        try:
-            username = request.POST['username']
-            password = request.POST['password']
-            bd_ts = int(request.POST['birthdate'])
-            birthdate = datetime.fromtimestamp(bd_ts).date()
-        except KeyError:
-            raise HTTPBadRequest("Missing argument")
-        except ValueError:
-            raise HTTPBadRequest("Malformed birthdate")
-        # insert into database
-
-Great! Now it's working! But now we realize that we need the user to be able to
-register with other arbitrary metadata fields that we can store with the
-object. Like their favorite color and the name of their first pet.
-
-.. code-block:: python
-
-    def register_user(request):
-        try:
-            username = request.POST['username']
-            password = request.POST['password']
-            bd_ts = int(request.POST['birthdate'])
-            birthdate = datetime.fromtimestamp(bd_ts).date()
-            metadata = request.POST['metadata']
-        except KeyError:
-            raise HTTPBadRequest("Missing argument")
-        except ValueError:
-            raise HTTPBadRequest("Malformed birthdate")
-        # insert into database
-
-Wait...what's metadata here? Oh, it's a dict? So...now your client is probably
-passing it up with the ``Content-Type`` of ``application/json``. Guess what?
-Those don't go to ``request.POST``. They go to ``request.json_body()``.
-
-Now repeat this code for every one of your views, using ``request.POST``,
-``request.GET``, and ``request.json_body()`` as appropriate.
-
-NO THANK YOU
-
-The Solution
-------------
-Luckily, pyramid is awesome and can be customized like nobody's business. It's
-not hard to write a wrapper that fixes this madness, but nobody should have to
-do it. It's a solved problem. Here's the solution:
-
-.. code-block:: python
-
-    def register_user(request):
-        username = request.param('username')
-        password = request.param('password')
-        birthdate = request.param('birthdate', type=date)
-        metadata = request.param('metadata', {}, type=dict)
-        # insert into database
-
-Kind of underwhelming, isn't it? It just sits there and looks like you think it
-should. It uses GET, POST, and json_body when appropriate. It converts fields
-for you to the proper data type. You can specify default values. Coolio.
-
-The Sexy Solution
------------------
-``@argify`` baby. Do it.
-
-.. code-block:: python
-
-    @argify(birthdate=date, metadata=dict)
-    def register_user(request, username, password, birthdate, metadata=None):
-        # insert into database
-
-Oh-ho-ho! Who's this pretty lady? It's ``@argify`` and it's wonderful. You
-decorate your views and it pulls the request parameters out for you. If you
-need to perform type conversions, specify the type in the decorator. If some
-parameters are optional and have default values, those become keyword
-arguments.
-
-Perhaps the best part about ``@argify`` is that it turns your unit tests from this:
-
-.. code-block:: python
-
-    def test_my_view(self):
-        request = DummyRequest()
-        params = {
-            'username': 'dsa',
-            'password': 'conspiracytheory',
-            'birthdate': date(1989, 4, 1)
-        }
-        request.param = lambda x: params[x]
-        ret = my_view(request)
-
-To this:
-
-.. code-block:: python
-
-    def test_my_view(self):
-        request = DummyRequest()
-        username, password = 'dsa', 'conspiracytheory'
-        birthdate = date(1989, 4, 1)
-        ret = my_view(request, username, password, birthdate)
-
-Note that argify MUST be the closest decorator to the view callable in order
-for the argument inspection to work properly.
-
-OMFG HOW DO I USE THIS
-----------------------
-Include ``pyramid_duh`` in your app (which comes with some :ref:`other things
+There are two provided utilities for accessing request parameters. The first is
+the ``request.param()`` method. You can use this method by including
+``pyramid_duh`` in your app (which comes with some :ref:`other things
 <subpath>`), or if you only want the ``param()`` method you can include
 ``pyramid_duh.params``:
 
@@ -165,22 +19,41 @@ Or in the config file:
     pyramid.includes =
         pyramid_duh
 
-To use ``@argify`` just import it. No includes necessary.
+Here is an example use case:
+
+.. code-block:: python
+
+    def register_user(request):
+        username = request.param('username')
+        password = request.param('password')
+        birthdate = request.param('birthdate', type=date)
+        metadata = request.param('metadata', {}, type=dict)
+        # insert into database
+
+Note that you can pass in default values and perform type conversion. This will
+handle both form-encoded data and application/json. If a required argument is
+missing, it will raise a 400. For greater detail, see the function docs at
+:meth:`~pyramid_duh.params.param`.
+
+Argify
+------
+Let's make the above example sexier:
 
 .. code-block:: python
 
     from pyramid_duh import argify
 
-    @argify
-    def my_view(request, foo, bar, baz='wibbly'):
-        # do stuff
+    @argify(birthdate=date, metadata=dict)
+    def register_user(request, username, password, birthdate, metadata=None):
+        # insert into database
 
-Type Validation
----------------
-``@argify`` also supports type validation. You can pass the validation method
-in with the type to the ``@argify`` decorator:
+Again, pretty intuitive. If any types are non-unicode, specify them in the
+`@argify()` decorator. Positional arguments are required; keyword arguments are
+optional. It even supports the value validation of ``request.param()``:
 
 .. code-block:: python
+
+    from pyramid_duh import argify
 
     def is_natural_number(num):
         return isinstance(num, int) and num > 0
@@ -189,10 +62,21 @@ in with the type to the ``@argify`` decorator:
     def set_age(request, username, age):
         # Set user age
 
+It also makes unit tests nicer:
+
+.. code-block:: python
+
+    def test_my_view(self):
+        request = DummyRequest()
+        ret = my_view(request, 'dsa', 'conspiracytheory', date(1989, 4, 1))
+
+.. note::
+
+    If you're only using ``@argify``, you don't need to include ``pyramid_duh``.
+
 Custom Parameter Types
 ----------------------
-You've gotten this far, which means you're sold on the
-auto-type-converting-smart-responding-parameter-reading. But you're hungry for
+You're now using argument sugar and you're loving it. But you're hungry for
 more. You want to auto-convert to your own super-special ``Unicorn`` data type.
 Well who doesn't?
 
@@ -231,6 +115,10 @@ And here is the code to parse that mess:
 The ``__from_json__`` method can be a ``classmethod`` or a ``staticmethod``, and the
 signature must be either ``(arg)`` or ``(request, arg)``.
 
+.. note::
+
+    I'm using ``@argify``, but this also works with ``request.param()``.
+
 You can also pass in a factory function as the type:
 
 .. code-block:: python
@@ -266,31 +154,21 @@ Let's look at a new set of POST parameters;
 
     {
         name: "Sparklelord",
-        friend_secret: "Radical",
+        secret: "Radical",
     }
 
-If you want to log in with these credentials, here is a gross way of doing that:
-
-.. code-block:: python
-
-    def fetch_unicorn(request, name):
-        friend_secret = request.param('friend_secret')
-        request.db.query_for_unicorn(name, friend_secret)
-
-    @argify(name=fetch_unicorn)
-    def make_rainbows(request, name):
-        # Make some fukkin' rainbows
-
-The obvious problem here is that we've injected a ``Unicorn`` instance as the
-``name`` property, which just doesn't make sense and isn't very pretty. The
-solution is to decorate your type factory method with, you guessed it,
-``@argify``.
+Let's say you want to pass up these parameters as login credentials. You would
+like to fetch the named Unicorn from the database and use that in your view.
+What would you call that argument? ``unicorn`` would make sense, but there
+aren't any parameters named ``unicorn``, so how would you inject a parameter
+that is generated from multiple request parameters? All you need to do is take
+your type factory function and decorate it with ``@argify`` as well.
 
 .. code-block:: python
 
     @argify
-    def fetch_unicorn(request, name, friend_secret):
-        request.db.query_for_unicorn(name, friend_secret)
+    def fetch_unicorn(request, name, secret):
+        return request.db.query_for_unicorn(name, secret)
 
     @argify(unicorn=fetch_unicorn)
     def make_rainbows(request, unicorn):
@@ -299,3 +177,9 @@ solution is to decorate your type factory method with, you guessed it,
 You'll notice here that we're injecting a field named ``unicorn``, which
 *doesn't exist* in the POST parameters. You can decorate factory methods or the
 ``__from_json__`` magic method on type classes.
+
+This particular functionality is kind of magic, and as such I would not
+recommend using it frequently because it obfuscates your code. This was really
+made with one thing in mind: user authentication. This is a great way to both
+authenticate a user and inject the User model into your view with minimal
+code duplication.

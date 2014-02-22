@@ -41,7 +41,7 @@ produces terrible and subtle bugs.
 
 IModelResource
 --------------
-Template for retrieving assets from a sqlalchemy database. Here's an example:
+Template for retrieving assets from a SQLAlchemy connection. Here's an example:
 
 .. code-block:: python
 

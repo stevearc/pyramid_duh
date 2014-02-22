@@ -2,85 +2,26 @@
 
 Subpath Predicate
 =================
-One of the problems people have with pyramid's traversal is that it doesn't
-allow you to set view predicates on the subpath. If you aren't already
-intimately familiar with the details of resource lookup via traversal, `you'll
-need this <https://pyramid.readthedocs.org/en/latest/narr/traversal.html>`_.
+One problem with pyramid's traversal mechanism is that it doesn't allow you to
+set view predicates on the subpath. If you aren't already intimately familiar
+with the details of resource lookup via traversal, `here are the docs
+<https://pyramid.readthedocs.org/en/latest/narr/traversal.html>`_.
 
 So we've got the ``context``, which is the last found resource. The ``name``,
 which is the first url segment that had no new context, and then the
-``subpath``, which is *everything else*. Here's a thing:
+``subpath``, which is all path components after the ``name``.
 
-.. code-block:: python
+To enforce a subpath matching, pass in a list or tuple as the vew predicate:
 
-    @view_config(context=MyCtxt, name='foobar')
-    def my_view(request):
-        # do stuff
-
-Let's say that ``MyCtxt`` corresponds to a url of ``'/mything'``. What urls
-will map to ``my_view``?
-
-* ``/mything/foobar`` - Ok, that's good
-* ``/mything/foobar/`` - Oh, trailing slashes too! That's cool.
-* ``/mything/foobar/baz`` - Wait...what?
-* ``/mything/foobar/baz/barrel/full/of/monkeys`` - I don't...I didn't tell you to do that...
-* ``/mything/foobar/baz/barrel/full/of/monkeys/oh/god/why/please/make/it/stop``
-
-This is silly. But it gets worse.
-
-.. code-block:: python
-
-    @view_config(context=MyCtxt, name='foobar')
-    def my_view(request):
-        # do stuff
-
-    @view_config(context=MyCtxt)
-    def root_view(request):
-        # do stuff
-
-Okay, so we've defined two endpoints:
-
-* ``/mything/`` - ``root_view``
-* ``/mything/foobar`` - ``my_view``
-
-But also these:
-
-* ``/mything/wabbit/season`` - ``root_view``
-* ``/mything/foobars`` - ``root_view``
-* ``/mything/foobar/baz`` - ``my_view``
-
-And what happens if we *need* the subpath in a view?
-
-.. code-block:: python
-
-    @view_config(context=MyCtxt, name='foobar')
-    def my_view(request):
-        if len(request.subpath) != 2:
-            raise HTTPNotFound()
-        if request.subpath[0] not in ('foo', 'bar'):
-            raise HTTPNotFound()
-
-That's not really okay. I'm not okay with that.
-
-The Solution
-------------
 .. code-block:: python
 
     @view_config(context=MyCtxt, name='foobar', subpath=())
     def my_view(request):
         # do things
 
-Huh...that looks easy. What does it match?
-
-* ``/mything/foobar``
-* ``/mything/foobar/``
-
-Oh hey, that's exactly what I wanted it to do with no crazy unexpected
-behavior. Awesome.
-
-BUT NOT AWESOME ENOUGH. GIVE ME MOARRRRR
-
-Let's say you want the subpaths to match ``/post/{id}`` but nothing else.
+Assuming that ``MyCtxt`` maps to ``/mything``, this view will match
+``/mything/foobar`` and ``/mything/foobar/`` only. No subpath allowed. Here is
+the format for matching a single subpath:
 
 .. code-block:: python
 
@@ -89,8 +30,7 @@ Let's say you want the subpaths to match ``/post/{id}`` but nothing else.
         id = request.subpath[0]
         # do things
 
-Oh, I guess that was easy too. But I want that post id. Is there a better way
-to get it than indexing the subpath?
+You can name the subpaths and access them by name:
 
 .. code-block:: python
 
@@ -99,9 +39,8 @@ to get it than indexing the subpath?
         id = request.named_subpaths['id']
         # do things
 
-Ooooooooooooooooooooooo
-
-Yeah, and it does PCRE as well. In case you need that.
+And there are flags you can pass in that allow, among other things, PCRE
+matching:
 
 .. code-block:: python
 
@@ -114,11 +53,11 @@ Yeah, and it does PCRE as well. In case you need that.
 Check the docs on :class:`~pyramid_duh.view.SubpathPredicate` for all of the
 formats, and :meth:`~pyramid_duh.view.match` for details on match flags.
 
-How Does I Do?
---------------
-Include ``pyramid_duh`` in your app (which comes with :ref:`parameter magic
-<params>`), or if you only want the subpath predicate you can include
-``pyramid_duh.view``:
+Including
+---------
+You can use this predicate by including ``pyramid_duh`` in your app (which
+comes with some :ref:`other things <params>`), or if you only want the
+predicate you can include ``pyramid_duh.view``:
 
 .. code-block:: python
 
