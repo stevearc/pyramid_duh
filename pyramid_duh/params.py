@@ -19,9 +19,9 @@ NO_ARG = object()
 __resolver__ = DottedNameResolver(__name__)
 
 
-def _param(request, name, default=NO_ARG, type=None, validate=None):
+def param(request, name, default=NO_ARG, type=None, validate=None):
     """
-    Access a parameter and perform type conversion
+    Access a parameter and perform type conversion.
 
     Parameters
     ----------
@@ -31,7 +31,10 @@ def _param(request, name, default=NO_ARG, type=None, validate=None):
     default : object, optional
         The default value to use if none is found
     type : object, optional
-        The type to convert the argument to
+        The type to convert the argument to. All python primitives are
+        supported, as well as ``date`` and ``datetime``. You may also pass in a
+        factory function or an object that has a static ``__from_json__``
+        method.
     validate : callable, optional
         Callable test to validate parameter value
 
@@ -41,6 +44,10 @@ def _param(request, name, default=NO_ARG, type=None, validate=None):
         If a parameter is requested that does not exist and no default was
         provided
 
+    Returns
+    -------
+    arg : object
+
     """
     params, loads = _params_from_request(request)
     return _param_from_dict(request, params, name, default, type, validate,
@@ -49,7 +56,7 @@ def _param(request, name, default=NO_ARG, type=None, validate=None):
 
 def _params_from_request(request):
     """
-    Pull the relevant parameters off the request
+    Pull the relevant parameters off the request.
 
     Parameters
     ----------
@@ -72,7 +79,7 @@ def _params_from_request(request):
 def _param_from_dict(request, params, name, default=NO_ARG, type=None,
                      validate=None, loads=True):
     """
-    Pull a parameter out of a dict and perform type conversion
+    Pull a parameter out of a dict and perform type conversion.
 
     Parameters
     ----------
@@ -171,7 +178,7 @@ def _param_from_dict(request, params, name, default=NO_ARG, type=None,
 
 def argify(*args, **type_kwargs):
     """
-    Request decorator for automagically passing in request parameters
+    Request decorator for automagically passing in request parameters.
 
     Notes
     -----
@@ -195,19 +202,18 @@ def argify(*args, **type_kwargs):
     :class:`~pyramid.httpexceptions.HTTPBadRequest` exception. If any keyword
     arguments are missing, it will simply use whatever the default value is.
 
-    Note that unit tests should be unaffected by this decorator. This should be
-    valid:
+    Note that unit tests should be unaffected by this decorator. This is valid:
 
     .. code-block:: python
 
         @argify
-        def myrequest(request, var1, var2='foo'):
+        def myview(request, var1, var2='foo'):
             return 'bar'
 
         class TestReq(unittest.TestCase):
             def test_my_request(self):
                 request = pyramid.testing.DummyRequest()
-                retval = myrequest(request, 5, var2='foobar')
+                retval = myview(request, 5, var2='foobar')
                 self.assertEqual(retval, 'bar')
 
     """
@@ -260,8 +266,8 @@ def argify(*args, **type_kwargs):
 
             params, loads = _params_from_request(request)
             params = dict(params)
-            for param in required:
-                type_spec = type_kwargs.get(param)
+            for arg in required:
+                type_spec = type_kwargs.get(arg)
                 if (isinstance(type_spec, tuple) or
                         isinstance(type_spec, list)):
                     type_def, validate = type_spec
@@ -269,31 +275,31 @@ def argify(*args, **type_kwargs):
                     type_def = type_spec
                     validate = None
 
-                if param == 'context':
+                if arg == 'context':
                     scope['context'] = context
-                elif param == 'request':
+                elif arg == 'request':
                     scope['request'] = request
-                elif param == 'self':
+                elif arg == 'self':
                     scope['self'] = self
                 else:
-                    scope[param] = _param_from_dict(
-                        request, params, param, NO_ARG,
+                    scope[arg] = _param_from_dict(
+                        request, params, arg, NO_ARG,
                         type_def, validate, loads=loads)
-                    params.pop(param, None)
+                    params.pop(arg, None)
             no_val = object()
-            for param in optional:
-                type_spec = type_kwargs.get(param)
+            for arg in optional:
+                type_spec = type_kwargs.get(arg)
                 if (isinstance(type_spec, tuple) or
                         isinstance(type_spec, list)):
                     type_def, validate = type_spec
                 else:
                     type_def = type_spec
                     validate = None
-                val = _param_from_dict(request, params, param, no_val,
+                val = _param_from_dict(request, params, arg, no_val,
                                        type_def, validate, loads)
-                params.pop(param, None)
+                params.pop(arg, None)
                 if val is not no_val:
-                    scope[param] = val
+                    scope[arg] = val
             if argspec.keywords is not None:
                 scope.update(params)
             return fxn(**scope)
@@ -323,4 +329,4 @@ def is_request(obj):
 
 def includeme(config):
     """ Add parameter utilities """
-    config.add_request_method(_param, name='param')
+    config.add_request_method(param, name='param')

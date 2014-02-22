@@ -10,7 +10,7 @@ from pyramid.httpexceptions import HTTPBadRequest
 from pyramid.testing import DummyRequest
 from pyramid_duh.compat import is_bytes, is_string, string_type
 from pyramid.config import Configurator
-from pyramid_duh.params import argify, _param, includeme
+from pyramid_duh.params import argify, param, includeme
 
 import pyramid_duh
 
@@ -70,7 +70,7 @@ class TestParam(unittest.TestCase):
         """ Pull unicode params off of request object """
         request = DummyRequest()
         request.params = {'field': 'myfield'}
-        field = _param(request, 'field')
+        field = param(request, 'field')
         self.assertEquals(field, 'myfield')
         self.assertTrue(is_string(field, strict=True))
 
@@ -80,7 +80,7 @@ class TestParam(unittest.TestCase):
         request.params = {}
         request.json_body = {'field': 'myfield'}
         request.headers = {'Content-Type': 'application/json'}
-        field = _param(request, 'field')
+        field = param(request, 'field')
         self.assertEquals(field, 'myfield')
         self.assertTrue(is_string(field, strict=True))
 
@@ -88,7 +88,7 @@ class TestParam(unittest.TestCase):
         """ Specifying type=unicode checks arg type before returning it """
         request = DummyRequest()
         request.params = {'field': 'myfield'}
-        field = _param(request, 'field', type=string_type)
+        field = param(request, 'field', type=string_type)
         self.assertEquals(field, 'myfield')
         self.assertTrue(is_string(field, strict=True))
 
@@ -97,13 +97,13 @@ class TestParam(unittest.TestCase):
         request = DummyRequest()
         request.params = {'field': 4}
         with self.assertRaises(HTTPBadRequest):
-            _param(request, 'field', type=string_type)
+            param(request, 'field', type=string_type)
 
     def test_str_param(self):
         """ Pull binary string param off of request object """
         request = DummyRequest()
         request.params = {'field': 'myfield'}
-        field = _param(request, 'field', type=bytes)
+        field = param(request, 'field', type=bytes)
         self.assertEquals(field, b'myfield')
         self.assertTrue(is_bytes(field))
 
@@ -113,7 +113,7 @@ class TestParam(unittest.TestCase):
         request.params = {}
         request.json_body = {'field': 'myfield'}
         request.headers = {'Content-Type': 'application/json'}
-        field = _param(request, 'field', type=bytes)
+        field = param(request, 'field', type=bytes)
         self.assertEquals(field, b'myfield')
         self.assertTrue(is_bytes(field))
 
@@ -121,7 +121,7 @@ class TestParam(unittest.TestCase):
         """ Pull binary string param off of request object """
         request = DummyRequest()
         request.params = {'field': 'myfield'}
-        field = _param(request, 'field', type=bytes)
+        field = param(request, 'field', type=bytes)
         self.assertEquals(field, b'myfield')
         self.assertTrue(is_bytes(field))
 
@@ -129,14 +129,14 @@ class TestParam(unittest.TestCase):
         """ Pull integer off of request object """
         request = DummyRequest()
         request.params = {'field': '1'}
-        field = _param(request, 'field', type=int)
+        field = param(request, 'field', type=int)
         self.assertEquals(field, 1)
 
     def test_list_param(self):
         """ Pull encoded lists off of request object """
         request = DummyRequest()
         request.params = {'field': json.dumps([1, 2, 3])}
-        field = _param(request, 'field', type=list)
+        field = param(request, 'field', type=list)
         self.assertEquals(field, [1, 2, 3])
 
     def test_list_json_body(self):
@@ -145,14 +145,14 @@ class TestParam(unittest.TestCase):
         request.params = {}
         request.json_body = {'field': [1, 2, 3]}
         request.headers = {'Content-Type': 'application/json'}
-        field = _param(request, 'field', type=list)
+        field = param(request, 'field', type=list)
         self.assertEquals(field, [1, 2, 3])
 
     def test_dict_param(self):
         """ Pull encoded dicts off of request object """
         request = DummyRequest()
         request.params = {'field': json.dumps({'a': 'b'})}
-        field = _param(request, 'field', type=dict)
+        field = param(request, 'field', type=dict)
         self.assertEquals(field, {'a': 'b'})
 
     def test_dict_json_body(self):
@@ -161,7 +161,7 @@ class TestParam(unittest.TestCase):
         request.params = {}
         request.json_body = {'field': {'a': 'b'}}
         request.headers = {'Content-Type': 'application/json'}
-        field = _param(request, 'field', type=dict)
+        field = param(request, 'field', type=dict)
         self.assertEquals(field, {'a': 'b'})
 
     def test_dict_param_bad_type(self):
@@ -169,13 +169,13 @@ class TestParam(unittest.TestCase):
         request = DummyRequest()
         request.params = {'field': json.dumps(['a', 'b'])}
         with self.assertRaises(HTTPBadRequest):
-            _param(request, 'field', type=dict)
+            param(request, 'field', type=dict)
 
     def test_set_param(self):
         """ Pull encoded sets off of request object """
         request = DummyRequest()
         request.params = {'field': json.dumps(['a', 'b'])}
-        field = _param(request, 'field', type=set)
+        field = param(request, 'field', type=set)
         self.assertEquals(field, set(['a', 'b']))
 
     def test_set_json_body(self):
@@ -184,7 +184,7 @@ class TestParam(unittest.TestCase):
         request.params = {}
         request.json_body = {'field': set(['a', 'b'])}
         request.headers = {'Content-Type': 'application/json'}
-        field = _param(request, 'field', type=set)
+        field = param(request, 'field', type=set)
         self.assertEquals(field, set(['a', 'b']))
 
     def test_datetime_param(self):
@@ -192,7 +192,7 @@ class TestParam(unittest.TestCase):
         request = DummyRequest()
         now = int(time.time())
         request.params = {'field': now}
-        field = _param(request, 'field', type=datetime)
+        field = param(request, 'field', type=datetime)
         self.assertEquals(time.mktime(field.timetuple()), now)
 
     def test_datetime_json_body(self):
@@ -202,7 +202,7 @@ class TestParam(unittest.TestCase):
         now = int(time.time())
         request.json_body = {'field': now}
         request.headers = {'Content-Type': 'application/json'}
-        field = _param(request, 'field', type=datetime)
+        field = param(request, 'field', type=datetime)
         self.assertEquals(time.mktime(field.timetuple()), now)
 
     def test_timedelta_param(self):
@@ -210,14 +210,14 @@ class TestParam(unittest.TestCase):
         request = DummyRequest()
         diff = 3600
         request.params = {'field': diff}
-        field = _param(request, 'field', type=datetime.timedelta)
+        field = param(request, 'field', type=datetime.timedelta)
         self.assertEquals(field, datetime.timedelta(seconds=diff))
 
     def test_date_param(self):
         """ Pull date off of request object as YYYY-mm-dd """
         request = DummyRequest()
         request.params = {'field': '2014-1-1'}
-        field = _param(request, 'field', type=datetime.date)
+        field = param(request, 'field', type=datetime.date)
         self.assertEquals(field, datetime.date(2014, 1, 1))
 
     def test_date_param_ts(self):
@@ -226,14 +226,14 @@ class TestParam(unittest.TestCase):
         now_date = datetime.date(2014, 1, 1)
         now_ts = time.mktime(now_date.timetuple())
         request.params = {'field': now_ts}
-        field = _param(request, 'field', type=datetime.date)
+        field = param(request, 'field', type=datetime.date)
         self.assertEquals(field, now_date)
 
     def test_bool_param(self):
         """ Pull bool off of request object """
         request = DummyRequest()
         request.params = {'field': 'true'}
-        field = _param(request, 'field', type=bool)
+        field = param(request, 'field', type=bool)
         self.assertTrue(field is True)
 
     def test_bool_json_body(self):
@@ -242,7 +242,7 @@ class TestParam(unittest.TestCase):
         request.params = {}
         request.headers = {'Content-Type': 'application/json'}
         request.json_body = {'field': True}
-        field = _param(request, 'field', type=bool)
+        field = param(request, 'field', type=bool)
         self.assertTrue(field is True)
 
     def test_missing_param(self):
@@ -251,7 +251,7 @@ class TestParam(unittest.TestCase):
         request.params = {}
         request.json_body = {}
         myvar = object()
-        field = _param(request, 'field', default=myvar)
+        field = param(request, 'field', default=myvar)
         self.assertTrue(field is myvar)
 
     def test_default_param(self):
@@ -259,14 +259,14 @@ class TestParam(unittest.TestCase):
         request = DummyRequest()
         request.params = {}
         request.json_body = {}
-        self.assertRaises(HTTPBadRequest, _param, request, 'field')
+        self.assertRaises(HTTPBadRequest, param, request, 'field')
 
     def test_object_param(self):
         """ Hydrate an object from json data """
         request = DummyRequest()
         data = {'alpha': 'a', 'beta': 'b'}
         request.params = {'field': json.dumps(data)}
-        field = _param(request, 'field', type=ParamContainer)
+        field = param(request, 'field', type=ParamContainer)
         self.assertTrue(isinstance(field, ParamContainer))
         self.assertEqual(field.alpha, data['alpha'])
         self.assertEqual(field.beta, data['beta'])
@@ -276,7 +276,7 @@ class TestParam(unittest.TestCase):
         request = DummyRequest()
         data = {'alpha': 'a', 'beta': 'b'}
         request.params = {'field': json.dumps(data)}
-        field = _param(request, 'field', type=ParamContainerStatic)
+        field = param(request, 'field', type=ParamContainerStatic)
         self.assertTrue(isinstance(field, ParamContainerStatic))
         self.assertEqual(field.alpha, data['alpha'])
         self.assertEqual(field.beta, data['beta'])
@@ -286,7 +286,7 @@ class TestParam(unittest.TestCase):
         request = DummyRequest()
         data = {'alpha': 'a', 'beta': 'b'}
         request.params = {'field': json.dumps(data)}
-        field = _param(request, 'field', type=ParamContainerFancy)
+        field = param(request, 'field', type=ParamContainerFancy)
         self.assertTrue(isinstance(field, ParamContainerFancy))
         self.assertEqual(field.alpha, data['alpha'])
         self.assertEqual(field.beta, data['beta'])
@@ -297,8 +297,8 @@ class TestParam(unittest.TestCase):
         request = DummyRequest()
         data = {'alpha': 'a', 'beta': 'b'}
         request.params = {'field': json.dumps(data)}
-        field = _param(request, 'field',
-                       type='tests.test_params.ParamContainerFancy')
+        field = param(request, 'field',
+                      type='tests.test_params.ParamContainerFancy')
         self.assertTrue(isinstance(field, ParamContainerFancy))
         self.assertEqual(field.alpha, data['alpha'])
         self.assertEqual(field.beta, data['beta'])
@@ -309,7 +309,7 @@ class TestParam(unittest.TestCase):
         request = DummyRequest()
         data = {'alpha': 'a', 'beta': 'b'}
         request.params = {'field': json.dumps(data)}
-        field = _param(request, 'field', type=SimpleParamContainer)
+        field = param(request, 'field', type=SimpleParamContainer)
         self.assertTrue(isinstance(field, SimpleParamContainer))
         self.assertEqual(field.alpha, data['alpha'])
         self.assertEqual(field.beta, data['beta'])
@@ -319,27 +319,27 @@ class TestParam(unittest.TestCase):
         request = DummyRequest()
         request.params = {'field': 'abc'}
         with self.assertRaises(HTTPBadRequest):
-            _param(request, 'field', type=int)
+            param(request, 'field', type=int)
 
     def test_include(self):
         """ Including pyramid_duh.params should add param() as a req method """
         config = MagicMock()
         includeme(config)
-        config.add_request_method.assert_called_with(_param, name='param')
+        config.add_request_method.assert_called_with(param, name='param')
 
     @patch('pyramid.config.Configurator.add_request_method')
     def test_include_root(self, add_request_method):
         """ Including pyramid_duh should add param() as a req method """
         config = Configurator()
         pyramid_duh.includeme(config)
-        add_request_method.assert_has_calls([call(_param, name='param')])
+        add_request_method.assert_has_calls([call(param, name='param')])
 
     def test_validate(self):
         """ param() can run a validation check on parameter values """
         request = DummyRequest()
         request.params = {'field': 'foobar'}
         validate = lambda x: x.startswith('foo')
-        field = _param(request, 'field', validate=validate)
+        field = param(request, 'field', validate=validate)
         self.assertEquals(field, 'foobar')
 
     def test_validate_failure(self):
@@ -348,7 +348,7 @@ class TestParam(unittest.TestCase):
         request.params = {'field': 'myfield'}
         validate = lambda x: x.startswith('foo')
         with self.assertRaises(HTTPBadRequest):
-            _param(request, 'field', validate=validate)
+            param(request, 'field', validate=validate)
 
 
 # pylint: disable=E1120,W0613,C0111,E1101
