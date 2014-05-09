@@ -10,7 +10,7 @@ User Guide
 ----------
 
 .. toctree::
-    :maxdepth: 1
+    :maxdepth: 2
     :glob:
 
     topics/request_parameters
@@ -18,6 +18,8 @@ User Guide
     topics/traversal
     topics/subpath
     topics/settings
+
+    changes
 
 API Reference
 -------------
@@ -27,14 +29,6 @@ API Reference
 
     ref/pyramid_duh
 
-Changelog
----------
-
-.. toctree::
-    :maxdepth: 1
-    :glob:
-
-    changes
 
 Indices and tables
 ------------------
