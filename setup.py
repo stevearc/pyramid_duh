@@ -3,7 +3,6 @@ import os
 import sys
 
 from setuptools import setup, find_packages
-from pyramid_duh_version import git_version, UpdateVersion
 
 
 HERE = os.path.abspath(os.path.dirname(__file__))
@@ -12,6 +11,7 @@ CHANGES = open(os.path.join(HERE, 'CHANGES.rst')).read()
 
 REQUIREMENTS = [
     'pyramid',
+    'six',
 ]
 
 TEST_REQUIREMENTS = [
@@ -24,8 +24,7 @@ if sys.version_info[:2] < (2, 7):
 if __name__ == "__main__":
     setup(
         name='pyramid_duh',
-        version=git_version('pyramid_duh'),
-        cmdclass={'update_version': UpdateVersion},
+        version='0.1.2',
         description='Useful utilities for every pyramid app',
         long_description=README + '\n\n' + CHANGES,
         classifiers=[

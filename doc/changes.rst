@@ -1,3 +1,10 @@
+Changelog
+=========
+
+0.1.2
+-----
+* Bug fix: Fix potential timezone issue when converting unix time to datetime
+
 0.1.1
 -----
 * Bug fix: IStaticResource fails to look up self.request if nested 2-deep

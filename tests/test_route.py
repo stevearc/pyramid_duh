@@ -14,6 +14,11 @@ except ImportError:
 # pylint: disable=W0104
 
 
+class Dummy(object):
+
+    """ Dummy resource for testing. """
+
+
 class TestSmartLookup(unittest.TestCase):
 
     """ Tests for smart lookup nodes """
@@ -67,6 +72,16 @@ class TestSmartLookup(unittest.TestCase):
         parent = IStaticResource()
         parent.__parent__ = grandparent
         resource = IStaticResource()
+        resource.__parent__ = parent
+        grandparent.request = object()
+        self.assertEqual(resource.request, grandparent.request)
+
+    def test_traverse_non_smart_parents(self):
+        """ ISmartLookupResource can traverse non-smart parents """
+        grandparent = Dummy()
+        parent = Dummy()
+        parent.__parent__ = grandparent
+        resource = ISmartLookupResource()
         resource.__parent__ = parent
         grandparent.request = object()
         self.assertEqual(resource.request, grandparent.request)

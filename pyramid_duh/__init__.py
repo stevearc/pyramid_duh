@@ -3,10 +3,7 @@ from .params import argify
 from .route import ISmartLookupResource, IStaticResource, IModelResource
 from .view import addslash
 
-try:
-    from ._version import *  # pylint: disable=F0401,W0401
-except ImportError:  # pragma: no cover
-    __version__ = 'unknown'
+__version__ = '0.1.2'
 
 
 def includeme(config):

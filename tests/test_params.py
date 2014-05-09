@@ -4,15 +4,16 @@ from __future__ import unicode_literals
 import datetime
 import time
 
+import calendar
 import json
+import six
 from mock import MagicMock, call, patch
+from pyramid.config import Configurator
 from pyramid.httpexceptions import HTTPBadRequest
 from pyramid.testing import DummyRequest
-from pyramid_duh.compat import is_bytes, is_string, string_type
-from pyramid.config import Configurator
-from pyramid_duh.params import argify, param, includeme
 
 import pyramid_duh
+from pyramid_duh.params import argify, param, includeme
 
 
 try:
@@ -72,7 +73,7 @@ class TestParam(unittest.TestCase):
         request.params = {'field': 'myfield'}
         field = param(request, 'field')
         self.assertEquals(field, 'myfield')
-        self.assertTrue(is_string(field, strict=True))
+        self.assertTrue(isinstance(field, six.text_type))
 
     def test_unicode_json_body(self):
         """ Pull unicode params out of json body """
@@ -82,22 +83,22 @@ class TestParam(unittest.TestCase):
         request.headers = {'Content-Type': 'application/json'}
         field = param(request, 'field')
         self.assertEquals(field, 'myfield')
-        self.assertTrue(is_string(field, strict=True))
+        self.assertTrue(isinstance(field, six.text_type))
 
     def test_unicode_param_explicit(self):
         """ Specifying type=unicode checks arg type before returning it """
         request = DummyRequest()
         request.params = {'field': 'myfield'}
-        field = param(request, 'field', type=string_type)
+        field = param(request, 'field', type=six.text_type)
         self.assertEquals(field, 'myfield')
-        self.assertTrue(is_string(field, strict=True))
+        self.assertTrue(isinstance(field, six.text_type))
 
     def test_unicode_param_bad_type(self):
         """ Raise exception if unicode param as incorrect type """
         request = DummyRequest()
         request.params = {'field': 4}
         with self.assertRaises(HTTPBadRequest):
-            param(request, 'field', type=string_type)
+            param(request, 'field', type=six.text_type)
 
     def test_str_param(self):
         """ Pull binary string param off of request object """
@@ -105,7 +106,7 @@ class TestParam(unittest.TestCase):
         request.params = {'field': 'myfield'}
         field = param(request, 'field', type=bytes)
         self.assertEquals(field, b'myfield')
-        self.assertTrue(is_bytes(field))
+        self.assertTrue(isinstance(field, six.binary_type))
 
     def test_str_json_body(self):
         """ Pull str params out of json body """
@@ -115,7 +116,7 @@ class TestParam(unittest.TestCase):
         request.headers = {'Content-Type': 'application/json'}
         field = param(request, 'field', type=bytes)
         self.assertEquals(field, b'myfield')
-        self.assertTrue(is_bytes(field))
+        self.assertTrue(isinstance(field, six.binary_type))
 
     def test_bytes_param(self):
         """ Pull binary string param off of request object """
@@ -123,7 +124,7 @@ class TestParam(unittest.TestCase):
         request.params = {'field': 'myfield'}
         field = param(request, 'field', type=bytes)
         self.assertEquals(field, b'myfield')
-        self.assertTrue(is_bytes(field))
+        self.assertTrue(isinstance(field, six.binary_type))
 
     def test_int_param(self):
         """ Pull integer off of request object """
@@ -193,7 +194,7 @@ class TestParam(unittest.TestCase):
         now = int(time.time())
         request.params = {'field': now}
         field = param(request, 'field', type=datetime)
-        self.assertEquals(time.mktime(field.timetuple()), now)
+        self.assertEquals(calendar.timegm(field.utctimetuple()), now)
 
     def test_datetime_json_body(self):
         """ Pull datetime params out of json body """
@@ -203,7 +204,7 @@ class TestParam(unittest.TestCase):
         request.json_body = {'field': now}
         request.headers = {'Content-Type': 'application/json'}
         field = param(request, 'field', type=datetime)
-        self.assertEquals(time.mktime(field.timetuple()), now)
+        self.assertEquals(calendar.timegm(field.utctimetuple()), now)
 
     def test_timedelta_param(self):
         """ Pull timedelta off of request object """
@@ -479,7 +480,7 @@ class TestArgify(unittest.TestCase):
         """ argify() can run a validation check on parameter values """
         validate = lambda x: x.startswith('foo')
 
-        @argify(field=(string_type, validate))
+        @argify(field=(six.text_type, validate))
         def base_req(request, field):
             return field
         context = object()
@@ -492,7 +493,7 @@ class TestArgify(unittest.TestCase):
         """ if argify fails validation check, raise exception """
         validate = lambda x: x.startswith('foo')
 
-        @argify(field=(string_type, validate))
+        @argify(field=(six.text_type, validate))
         def base_req(request, field):  # pragma: no cover
             return field
         context = object()
@@ -505,7 +506,7 @@ class TestArgify(unittest.TestCase):
         """ if argify fails validation check for kwargs, raise exception """
         validate = lambda x: x.startswith('foo')
 
-        @argify(field=(string_type, validate))
+        @argify(field=(six.text_type, validate))
         def base_req(request, field=None):  # pragma: no cover
             return field
         context = object()

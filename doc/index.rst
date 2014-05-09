@@ -4,11 +4,13 @@ Pyramid Duh - Tools you Want
 This is just a collection of utilities that I found myself putting into *every
 single* pyramid project I made. So now they're all in one place.
 
+Code lives here: https://github.com/stevearc/pyramid_duh
+
 User Guide
 ----------
 
 .. toctree::
-    :maxdepth: 1
+    :maxdepth: 2
     :glob:
 
     topics/request_parameters
@@ -17,33 +19,7 @@ User Guide
     topics/subpath
     topics/settings
 
-Versions
---------
-=========  ===============  ========
-Version    Build            Coverage
-=========  ===============  ========
-master_    |build-master|_  |coverage-master|_
-0.1.1_     |build-0.1.1|_   |coverage-0.1.1|_
-0.1.0_     |build-0.1.0|_   |coverage-0.1.0|_
-=========  ===============  ========
-
-.. _master: ../latest/
-.. |build-master| image:: https://travis-ci.org/stevearc/pyramid_duh.png?branch=master
-.. _build-master: https://travis-ci.org/stevearc/pyramid_duh
-.. |coverage-master| image:: https://coveralls.io/repos/stevearc/pyramid_duh/badge.png?branch=master
-.. _coverage-master: https://coveralls.io/r/stevearc/pyramid_duh?branch=master
-
-.. _0.1.1: ../0.1.1/
-.. |build-0.1.1| image:: https://travis-ci.org/stevearc/pyramid_duh.png?branch=0.1.1
-.. _build-0.1.1: https://travis-ci.org/stevearc/pyramid_duh
-.. |coverage-0.1.1| image:: https://coveralls.io/repos/stevearc/pyramid_duh/badge.png?branch=0.1.1
-.. _coverage-0.1.1: https://coveralls.io/r/stevearc/pyramid_duh?branch=0.1.1
-
-.. _0.1.0: ../0.1.0/
-.. |build-0.1.0| image:: https://travis-ci.org/stevearc/pyramid_duh.png?branch=0.1.0
-.. _build-0.1.0: https://travis-ci.org/stevearc/pyramid_duh
-.. |coverage-0.1.0| image:: https://coveralls.io/repos/stevearc/pyramid_duh/badge.png?branch=0.1.0
-.. _coverage-0.1.0: https://coveralls.io/r/stevearc/pyramid_duh?branch=0.1.0
+    changes
 
 API Reference
 -------------
@@ -53,14 +29,6 @@ API Reference
 
     ref/pyramid_duh
 
-Changelog
----------
-
-.. toctree::
-    :maxdepth: 1
-    :glob:
-
-    changes
 
 Indices and tables
 ------------------
