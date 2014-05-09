@@ -3,7 +3,7 @@ from .params import argify
 from .route import ISmartLookupResource, IStaticResource, IModelResource
 from .view import addslash
 
-__version__ = '0.1.1'
+__version__ = '0.1.2'
 
 
 def includeme(config):

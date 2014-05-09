@@ -24,7 +24,7 @@ if sys.version_info[:2] < (2, 7):
 if __name__ == "__main__":
     setup(
         name='pyramid_duh',
-        version='0.1.1',
+        version='0.1.2',
         description='Useful utilities for every pyramid app',
         long_description=README + '\n\n' + CHANGES,
         classifiers=[

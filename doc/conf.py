@@ -20,7 +20,7 @@ master_doc = 'index'
 project = u'pyramid_duh'
 copyright = u'2013, Steven Arcangeli'
 
-release = '0.1.1'
+release = '0.1.2'
 version = '.'.join(release.split('.')[:2])
 
 exclude_patterns = ['_build']
