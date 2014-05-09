@@ -1,18 +1,19 @@
 """ Tests for param utilities """
 from __future__ import unicode_literals
 
+import calendar
 import datetime
+import json
 import time
 
-import json
 from mock import MagicMock, call, patch
+from pyramid.config import Configurator
 from pyramid.httpexceptions import HTTPBadRequest
 from pyramid.testing import DummyRequest
-from pyramid_duh.compat import is_bytes, is_string, string_type
-from pyramid.config import Configurator
-from pyramid_duh.params import argify, param, includeme
 
 import pyramid_duh
+from pyramid_duh.compat import is_bytes, is_string, string_type
+from pyramid_duh.params import argify, param, includeme
 
 
 try:
@@ -193,7 +194,7 @@ class TestParam(unittest.TestCase):
         now = int(time.time())
         request.params = {'field': now}
         field = param(request, 'field', type=datetime)
-        self.assertEquals(time.mktime(field.timetuple()), now)
+        self.assertEquals(calendar.timegm(field.utctimetuple()), now)
 
     def test_datetime_json_body(self):
         """ Pull datetime params out of json body """
@@ -203,7 +204,7 @@ class TestParam(unittest.TestCase):
         request.json_body = {'field': now}
         request.headers = {'Content-Type': 'application/json'}
         field = param(request, 'field', type=datetime)
-        self.assertEquals(time.mktime(field.timetuple()), now)
+        self.assertEquals(calendar.timegm(field.utctimetuple()), now)
 
     def test_timedelta_param(self):
         """ Pull timedelta off of request object """

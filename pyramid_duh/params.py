@@ -139,12 +139,12 @@ def _param_from_dict(request, params, name, default=NO_ARG, type=None,
                 arg = json.loads(arg)
             value = set(arg)
         elif type is datetime.datetime or type is datetime:
-            value = datetime.datetime.fromtimestamp(float(arg))
+            value = datetime.datetime.utcfromtimestamp(float(arg))
         elif type is datetime.timedelta:
             value = datetime.timedelta(seconds=float(arg))
         elif type is datetime.date:
             if is_num(arg) or arg.isdigit():
-                value = datetime.datetime.fromtimestamp(int(arg)).date()
+                value = datetime.datetime.utcfromtimestamp(int(arg)).date()
             else:
                 value = datetime.datetime.strptime(arg, '%Y-%m-%d').date()
         elif type is bool:
