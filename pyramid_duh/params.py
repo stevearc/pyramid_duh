@@ -4,6 +4,7 @@ import datetime
 import functools
 import inspect
 import json
+import six
 from pyramid.httpexceptions import HTTPBadRequest, HTTPException
 from pyramid.interfaces import IRequest
 from pyramid.path import DottedNameResolver
@@ -12,7 +13,6 @@ from pyramid.settings import asbool
 from zope.interface.exceptions import DoesNotImplement
 from zope.interface.verify import verifyObject
 # pylint: enable=F0401,E0611
-from .compat import string_type, bytes_types, num_types, is_string, is_num
 
 
 NO_ARG = object()
@@ -122,11 +122,11 @@ def _param_from_dict(request, params, name, default=NO_ARG, type=None,
     try:
         if type is None:
             value = arg
-        elif type is string_type:
-            if not is_string(arg):
+        elif type is six.text_type or type is six.string_types:
+            if not isinstance(arg, six.string_types):
                 raise HTTPBadRequest("Argument '%s' is the wrong type!" % name)
             value = arg
-        elif type in bytes_types:
+        elif type is six.binary_type:
             value = arg.encode("utf8")
         elif type is list or type is dict:
             if loads:
@@ -143,13 +143,14 @@ def _param_from_dict(request, params, name, default=NO_ARG, type=None,
         elif type is datetime.timedelta:
             value = datetime.timedelta(seconds=float(arg))
         elif type is datetime.date:
-            if is_num(arg) or arg.isdigit():
+            if (isinstance(arg, six.integer_types) or
+                    isinstance(arg, float) or arg.isdigit()):
                 value = datetime.datetime.utcfromtimestamp(int(arg)).date()
             else:
                 value = datetime.datetime.strptime(arg, '%Y-%m-%d').date()
         elif type is bool:
             value = asbool(arg)
-        elif type in num_types:
+        elif type in six.integer_types or type is float:
             value = type(arg)
         else:
             if loads:

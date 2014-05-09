@@ -4,9 +4,9 @@ import re
 
 import functools
 import inspect
+import six
 from pyramid.httpexceptions import HTTPFound
 
-from .compat import is_string
 from .params import is_request
 
 
@@ -105,7 +105,7 @@ class SubpathPredicate(object):
     """
 
     def __init__(self, paths, config):
-        if is_string(paths):
+        if isinstance(paths, six.string_types):
             paths = (paths,)
         self.paths = paths
         self.config = config

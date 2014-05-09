@@ -4,6 +4,7 @@ Changelog
 0.1.2
 -----
 * Bug fix: Fix potential timezone issue when converting unix time to datetime
+* Using the 'six' library for python 2/3 compatibility
 
 0.1.1
 -----

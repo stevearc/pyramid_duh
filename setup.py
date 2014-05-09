@@ -11,6 +11,7 @@ CHANGES = open(os.path.join(HERE, 'CHANGES.rst')).read()
 
 REQUIREMENTS = [
     'pyramid',
+    'six',
 ]
 
 TEST_REQUIREMENTS = [
