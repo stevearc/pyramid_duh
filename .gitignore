@@ -36,7 +36,6 @@ nosetests.xml
 .pydevproject
 pyramid_duh_env
 .ropeproject
-_version.py
 _localhost.db
 
 # docs
